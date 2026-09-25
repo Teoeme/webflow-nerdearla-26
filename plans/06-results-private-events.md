@@ -1,6 +1,6 @@
 # 06 · results · Private medal board
 
-**Status:** todo
+**Status:** done
 
 ## Goal
 
