@@ -15,6 +15,7 @@ export function AthleteSwitcher({ athletes, currentAthleteId, label }: AthleteSw
       <label>
         {label}
         <select
+          key={currentAthleteId}
           name="athleteId"
           defaultValue={currentAthleteId}
           onChange={(event) => event.currentTarget.form?.requestSubmit()}
