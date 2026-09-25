@@ -31,6 +31,7 @@ they accept it and the photo moves to their gallery for that same event.
 | Performance metrics | In | Manual entry: distance, pace, avg HR, elevation, time |
 | Photo gallery per event | In | Photos only, no video |
 | Photo ownership transfer | In — **hero feature** | Request → recipient accepts/rejects → owner changes |
+| English and Spanish UI | In | Language switcher, cookie-based. The jury speaks both. See `AGENTS.md` |
 | Metrics from a watch screenshot (AI vision) | Stretch | Upload a Garmin/Strava/Coros summary screenshot, a vision model extracts the metrics. Replaces a real Garmin integration. First thing to cut if late. |
 | Real authentication | Out | Simulated users with a "View as…" switcher (cookie). Said openly in the pitch. |
 | Tagging people in photos | Out | Only if time is left over |

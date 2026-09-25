@@ -72,10 +72,30 @@ Executors:
 
 - **The schema is owned by `platform`.** Other areas consume it; they don't change it.
   Need a new column? Ask for it. Migrations are numbered files in `db/migrations/`
-  (`0001_init.sql`, `0002_...`); never edit a migration that is already on `main`.
+  (`0001_init.sql`, `0002_...`); never edit a migration that is already on `develop`.
 - Data access goes through `db/` modules, one per entity. UI components don't write SQL.
 - The current athlete comes from a single function in the platform area (cookie-based,
   simulated users). Don't read the cookie anywhere else.
+
+## Languages
+
+The app is fully bilingual, **English and Spanish**: the jury speaks both. Every string a
+user reads exists in both languages, from day one. A screen with hard-coded copy is not done.
+
+- **No locale in the URL.** The language is a cookie, set by a language switcher in the
+  layout. First visit: the browser's `Accept-Language`, falling back to English. This keeps
+  routes as they are and needs no middleware.
+- **The current locale comes from a single function in the platform area**, like the current
+  athlete. Don't read the cookie or the header anywhere else.
+- **Dictionaries, no library.** Copy lives in typed TypeScript objects. English is the
+  source: the Spanish object is typed against it, so a missing translation is a build error.
+- **One dictionary per area, so parallel work never collides.** Each area owns its own pair
+  of files (`<area>.en.ts`, `<area>.es.ts`) and only edits those. The platform area creates
+  every pair up front (empty for other areas) and owns the file that combines them.
+- Dates, times, pace and distances are formatted with `Intl` for the current locale, not by
+  hand. Athlete and event names are data and are not translated.
+- Spanish copy is neutral Rioplatense Spanish with *vos* ("Aceptá la foto"), the way the
+  local audience speaks.
 
 ## Platform constraints (Webflow Cloud)
 
@@ -86,7 +106,8 @@ Executors:
 
 ## Code standards
 
-- Artifacts (code, identifiers, comments, UI copy, commits) in **English**.
+- Artifacts (code, identifiers, comments, commits) in **English**. UI copy in both
+  languages, through the dictionaries (see Languages).
 - Pronounceable, concrete names. No `helper`, `manager`, `utils`, `handler` as a standalone name.
   No `I` prefix on interfaces, no `Impl` suffix.
 - One concept, one name — use the names in the README data model everywhere.
