@@ -13,7 +13,9 @@ Dark only. There is no light theme.
 | `surface` | `#1A1D22` → `#0D0E11` | Cards and panels: gradient from dark gray (top left) to black |
 | `field` | `#0D0E11` | Input fill |
 | `line` | `#22252A` | Dividers, input borders |
-| `glow` | `#3D7BFF` at 22% | Neon border of cards and panels |
+| `rim` | white at 6% | Border of cards and panels, almost invisible |
+| `glow` | `#3D7BFF` at 70% | Light strip on the top edge of cards and panels |
+| `glow-haze` | `#3D7BFF` at 7% | Faint light cast by the strip into the panel |
 | `text-muted` | `#8B9099` | Secondary text, labels, metadata |
 | `text` | `#EEF0F3` | Primary text |
 | `accent` | `#3D7BFF` | Emphasis: primary action, links, active state, key numbers |
@@ -59,17 +61,18 @@ extra CSS skew.
 ## Shape
 
 - Radius: `4px` for everything (buttons, inputs, cards, photos). Sharp and sporty.
-- Cards and panels: `surface` gradient, `1px` border in `glow`, and a faint outer glow
-  (`shadow-glow`). The neon must be barely noticeable; if it reads as a glowing box, it is
-  too strong.
+- Cards and panels (the `panel` utility): `surface` gradient, `1px` border in `rim`, and a
+  neon tube of light on the top edge. The light is a `1px` strip in `glow` that fades out
+  toward both ends, plus a `glow-haze` that falls a few pixels into the panel. It must read
+  as light, not as a blue border; if the edge looks outlined, it is too strong.
 - Inputs: flat `field` fill with a `1px` border in `line`; the border turns `accent`
   on focus.
-- Dividers inside a card use `line`. No drop shadows other than the glow.
+- Dividers inside a card use `line`. No drop shadows.
 
 ## Tailwind v4 tokens
 
 Paste into `src/app/globals.css`. Tailwind generates `bg-background`, `text-accent`,
-`border-line`, `border-glow`, `bg-surface`, `shadow-glow`, `rounded-sm`, etc. from these.
+`border-line`, `rounded-sm`, etc. from these. `panel` is the card and panel surface.
 
 ```css
 @import "tailwindcss";
@@ -78,7 +81,9 @@ Paste into `src/app/globals.css`. Tailwind generates `bg-background`, `text-acce
   --color-background: #0b0c0e;
   --color-field: #0d0e11;
   --color-line: #22252a;
-  --color-glow: rgb(61 123 255 / 0.22);
+  --color-rim: rgb(255 255 255 / 0.06);
+  --color-glow: rgb(61 123 255 / 0.7);
+  --color-glow-haze: rgb(61 123 255 / 0.07);
   --color-text-muted: #8b9099;
   --color-text: #eef0f3;
   --color-accent: #3d7bff;
@@ -89,11 +94,35 @@ Paste into `src/app/globals.css`. Tailwind generates `bg-background`, `text-acce
 
   --font-sans: var(--font-archivo);
   --radius-sm: 4px;
-  --shadow-glow: 0 0 24px -12px rgb(61 123 255 / 0.35);
 }
 
-@utility bg-surface {
+@utility panel {
+  position: relative;
+  isolation: isolate;
+  border: 1px solid var(--color-rim);
+  border-radius: var(--radius-sm);
   background-image: linear-gradient(160deg, #1a1d22 0%, #0d0e11 100%);
+
+  /* Neon tube: a 1px strip of light on the top edge, fading out at both ends. */
+  &::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    inset-inline: 18%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--color-glow), transparent);
+  }
+
+  /* Light the tube casts into the panel. */
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: inherit;
+    background: radial-gradient(55% 72px at 50% 0, var(--color-glow-haze), transparent);
+  }
 }
 
 :root {
