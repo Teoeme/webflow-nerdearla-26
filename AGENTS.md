@@ -25,6 +25,47 @@ Several agents work on this repo at the same time. To avoid stepping on each oth
 | gallery | `feat/gallery` | Photo upload, gallery, transfers (request, inbox, accept/reject) |
 | ai-capture | `feat/ai-capture` | Screenshot → metrics extraction |
 
+## Plans
+
+Work is planned and executed by different agents. A planner writes plans in `plans/`;
+**other agents execute them, in parallel.** Time is short, so a plan that collides with
+another one costs more than a plan that is a bit less ambitious.
+
+- **One plan, one area, one branch.** Name it `plans/NN-<area>-<slug>.md`
+  (`01-platform-schema.md`). `NN` is the order it was written, not a priority.
+- **Scopes never overlap.** A plan lists the exact files and folders it creates or modifies.
+  Two plans that can run at the same time must not share a single file. If they would, split
+  the work differently or make one plan depend on the other.
+- **Contracts first.** Whatever several plans share (schema, types, `db/` function signatures,
+  the current-athlete function, routes) is defined in one plan, usually `platform`. The other
+  plans quote the exact signature they consume, so they can start before it is merged.
+- **The plan is self-contained.** The executor has no memory of the planning conversation.
+  Everything it needs is written in the plan.
+
+Every plan has these sections:
+
+| Section | Content |
+|---|---|
+| Status | `todo`, `in-progress` or `done`. Only the executor of the plan updates it |
+| Goal | What works when the plan is done, in one or two sentences |
+| Area and branch | Area from the table above and its branch/worktree |
+| Owns | Exhaustive list of files and folders the plan may create or modify |
+| Must not touch | Nearby files owned by other plans or areas |
+| Depends on | Plans that must be merged first, or the contract to build against until then |
+| Contracts | Exact signatures and types consumed or provided |
+| Steps | Small, ordered, each one verifiable |
+| Verification | Commands to run (`npm run build` at minimum) and what to check by hand |
+| Done when | Checkable acceptance criteria |
+
+Executors:
+
+- Load the *Código Sostenible* skills before writing code (`cs-fundamentos`,
+  `cs-implementacion`, `cs-errores`, `cs-solid-diseno`, `cs-refactoring`, `cs-mitos`).
+  All code, tests included, follows them.
+- Stay inside the plan's **Owns** list. If the work needs anything outside it, stop and
+  report it; don't edit it.
+- Update only your own plan file, and only its Status line.
+
 ## Shared contracts
 
 - **The schema is owned by `platform`.** Other areas consume it; they don't change it.
