@@ -4,8 +4,8 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import type { Discipline } from "@/db/types";
-import type { Dictionary } from "@/i18n/dictionary";
 import { createEventAction, type NewEventFormState } from "./actions";
+import type { ClientResultsMessages } from "./client-messages";
 import { FieldError } from "./field-error";
 
 const INITIAL_STATE: NewEventFormState = { errors: {} };
@@ -17,7 +17,7 @@ const DISCIPLINE_OPTIONS: Discipline[] = [
   "swimming",
 ];
 
-export function NewEventForm({ messages }: { messages: Dictionary["results"] }) {
+export function NewEventForm({ messages }: { messages: ClientResultsMessages }) {
   const [state, formAction, isPending] = useActionState(createEventAction, INITIAL_STATE);
   const fields = messages.newEventForm.fields;
   const errors = state.errors;

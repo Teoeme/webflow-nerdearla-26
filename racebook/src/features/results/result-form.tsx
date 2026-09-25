@@ -4,9 +4,9 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import type { Medal, RaceResult } from "@/db/types";
-import type { Dictionary } from "@/i18n/dictionary";
 import { formatDuration } from "@/i18n/formatters";
 import { saveResultAction, type ResultFormState } from "./actions";
+import type { ClientResultsMessages } from "./client-messages";
 import { FieldError } from "./field-error";
 
 const INITIAL_STATE: ResultFormState = { errors: {} };
@@ -24,7 +24,7 @@ export function ResultForm({
 }: {
   eventId: string;
   existingResult: RaceResult | undefined;
-  messages: Dictionary["results"];
+  messages: ClientResultsMessages;
 }) {
   const saveResultForEvent = saveResultAction.bind(null, eventId);
   const [state, formAction, isPending] = useActionState(saveResultForEvent, INITIAL_STATE);
