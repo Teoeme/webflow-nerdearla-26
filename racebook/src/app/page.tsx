@@ -53,7 +53,9 @@ export default async function MedalBoardPage() {
       {results.length === 0 ? (
         <div className="panel flex flex-col items-start gap-3 p-6">
           <p>{messages.medalBoard.emptyState.message}</p>
-          <ButtonLink href="/events/new">{messages.medalBoard.emptyState.cta}</ButtonLink>
+          <ButtonLink href="/events/new" variant="outline">
+            {messages.medalBoard.emptyState.cta}
+          </ButtonLink>
         </div>
       ) : (
         <ul className="flex flex-col gap-4">

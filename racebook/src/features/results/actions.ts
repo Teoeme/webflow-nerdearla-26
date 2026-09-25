@@ -1,8 +1,8 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createEvent } from "@/db/events";
+import { createEvent, findEvent } from "@/db/events";
 import { saveResult } from "@/db/results";
 import { getCurrentAthlete } from "@/session/current-athlete";
 import type { Discipline, Medal } from "@/db/types";
@@ -45,6 +45,11 @@ export async function saveResultAction(
   _previousState: ResultFormState,
   formData: FormData,
 ): Promise<ResultFormState> {
+  // The page already 404s for an unknown event; the action is callable on its own.
+  if (!(await findEvent(eventId))) {
+    notFound();
+  }
+
   const placeInput = readText(formData, "place");
   const timeInput = readText(formData, "time");
   const distanceInput = readText(formData, "distance");
