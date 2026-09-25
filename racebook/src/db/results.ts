@@ -14,14 +14,23 @@ type ResultRow = {
   elevation_m: number | null;
 };
 
-type ResultWithEventRow = ResultRow & {
-  event_name: string;
-  event_date: string;
-  event_location: string;
-  event_discipline: Discipline;
+type EventWithResultRow = {
+  id: string;
+  owner_id: string;
+  name: string;
+  date: string;
+  location: string;
+  discipline: Discipline;
+  result_id: string | null;
+  athlete_id: string | null;
+  place: number | null;
+  time_seconds: number | null;
+  medal: Medal | null;
+  distance_km: number | null;
+  pace_seconds_per_km: number | null;
+  avg_heart_rate: number | null;
+  elevation_m: number | null;
 };
-
-type ResultWithAthleteRow = ResultRow & { athlete_name: string };
 
 function toRaceResult(row: ResultRow): RaceResult {
   return {
@@ -38,60 +47,59 @@ function toRaceResult(row: ResultRow): RaceResult {
   };
 }
 
-export type AthleteResult = RaceResult & { event: RaceEvent };
-export type EventResult = RaceResult & { athleteName: string };
+function toEventEntry(row: EventWithResultRow): EventEntry {
+  const event: RaceEvent = {
+    id: row.id,
+    ownerId: row.owner_id,
+    name: row.name,
+    date: row.date,
+    location: row.location,
+    discipline: row.discipline,
+  };
+
+  const result =
+    row.result_id === null
+      ? null
+      : toRaceResult({
+          id: row.result_id,
+          athlete_id: row.athlete_id as string,
+          event_id: row.id,
+          place: row.place,
+          time_seconds: row.time_seconds,
+          medal: row.medal,
+          distance_km: row.distance_km,
+          pace_seconds_per_km: row.pace_seconds_per_km,
+          avg_heart_rate: row.avg_heart_rate,
+          elevation_m: row.elevation_m,
+        });
+
+  return { event, result };
+}
+
+export type EventEntry = { event: RaceEvent; result: RaceResult | null };
 export type ResultInput = Omit<RaceResult, "id">;
 
 const RESULT_COLUMNS =
   "id, athlete_id, event_id, place, time_seconds, medal, distance_km, pace_seconds_per_km, avg_heart_rate, elevation_m";
 
-export async function listResultsForAthlete(athleteId: string): Promise<AthleteResult[]> {
+// Every event the athlete owns, newest first, with their own result attached
+// when they logged one.
+export async function listEventEntries(ownerId: string): Promise<EventEntry[]> {
   const database = await getDatabase();
   const { results } = await database
     .prepare(
-      `SELECT r.id, r.athlete_id, r.event_id, r.place, r.time_seconds, r.medal,
-              r.distance_km, r.pace_seconds_per_km, r.avg_heart_rate, r.elevation_m,
-              e.name AS event_name, e.date AS event_date, e.location AS event_location,
-              e.discipline AS event_discipline
-       FROM results r
-       JOIN events e ON e.id = r.event_id
-       WHERE r.athlete_id = ?
+      `SELECT e.id, e.owner_id, e.name, e.date, e.location, e.discipline,
+              r.id AS result_id, r.athlete_id, r.place, r.time_seconds, r.medal,
+              r.distance_km, r.pace_seconds_per_km, r.avg_heart_rate, r.elevation_m
+       FROM events e
+       LEFT JOIN results r ON r.event_id = e.id AND r.athlete_id = e.owner_id
+       WHERE e.owner_id = ?
        ORDER BY e.date DESC`,
     )
-    .bind(athleteId)
-    .all<ResultWithEventRow>();
+    .bind(ownerId)
+    .all<EventWithResultRow>();
 
-  return results.map((row) => ({
-    ...toRaceResult(row),
-    event: {
-      id: row.event_id,
-      // A result always lives on its own athlete's private copy of the event
-      // (see migration 0003), so the owner is the same athlete as the result.
-      ownerId: row.athlete_id,
-      name: row.event_name,
-      date: row.event_date,
-      location: row.event_location,
-      discipline: row.event_discipline,
-    },
-  }));
-}
-
-export async function listResultsForEvent(eventId: string): Promise<EventResult[]> {
-  const database = await getDatabase();
-  const { results } = await database
-    .prepare(
-      `SELECT r.id, r.athlete_id, r.event_id, r.place, r.time_seconds, r.medal,
-              r.distance_km, r.pace_seconds_per_km, r.avg_heart_rate, r.elevation_m,
-              a.name AS athlete_name
-       FROM results r
-       JOIN athletes a ON a.id = r.athlete_id
-       WHERE r.event_id = ?
-       ORDER BY (r.place IS NULL) ASC, r.place ASC`,
-    )
-    .bind(eventId)
-    .all<ResultWithAthleteRow>();
-
-  return results.map((row) => ({ ...toRaceResult(row), athleteName: row.athlete_name }));
+  return results.map(toEventEntry);
 }
 
 export async function findResult(athleteId: string, eventId: string): Promise<RaceResult | undefined> {
