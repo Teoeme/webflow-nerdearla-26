@@ -12,8 +12,9 @@ export const resultsEn = {
       message: "No races logged yet.",
       cta: "Log a race",
     },
-    otherEvents: {
-      title: "Other events",
+    card: {
+      noResultYet: "No result yet",
+      logResultCta: "Log my result",
     },
   },
   eventDetail: {
@@ -29,15 +30,6 @@ export const resultsEn = {
       pace: "Pace",
       avgHeartRate: "Avg. heart rate (bpm)",
       elevation: "Elevation (m)",
-    },
-    resultsTable: {
-      title: "Results",
-      place: "Place",
-      athlete: "Athlete",
-      time: "Time",
-      pace: "Pace",
-      medal: "Medal",
-      noResult: "—",
     },
   },
   resultForm: {

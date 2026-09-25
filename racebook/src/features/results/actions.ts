@@ -2,7 +2,7 @@
 
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createEvent, findEvent } from "@/db/events";
+import { createEvent, findOwnedEvent } from "@/db/events";
 import { saveResult } from "@/db/results";
 import { getCurrentAthlete } from "@/session/current-athlete";
 import type { Discipline, Medal } from "@/db/types";
@@ -45,8 +45,11 @@ export async function saveResultAction(
   _previousState: ResultFormState,
   formData: FormData,
 ): Promise<ResultFormState> {
-  // The page already 404s for an unknown event; the action is callable on its own.
-  if (!(await findEvent(eventId))) {
+  const athlete = await getCurrentAthlete();
+
+  // The page already 404s for an event the athlete doesn't own; the action
+  // is callable on its own.
+  if (!(await findOwnedEvent(eventId, athlete.id))) {
     notFound();
   }
 
@@ -85,7 +88,6 @@ export async function saveResultAction(
       ? calculatePaceSecondsPerKm(timeSeconds, distanceKm)
       : null;
 
-  const athlete = await getCurrentAthlete();
   await saveResult({
     athleteId: athlete.id,
     eventId,

@@ -21,25 +21,6 @@ function toRaceEvent(row: EventRow): RaceEvent {
   };
 }
 
-/** @deprecated Use listEventsOwnedBy / findOwnedEvent. Removed by plan 06. */
-export async function listEvents(): Promise<RaceEvent[]> {
-  const database = await getDatabase();
-  const { results } = await database
-    .prepare("SELECT id, owner_id, name, date, location, discipline FROM events ORDER BY date DESC")
-    .all<EventRow>();
-  return results.map(toRaceEvent);
-}
-
-/** @deprecated Use listEventsOwnedBy / findOwnedEvent. Removed by plan 06. */
-export async function findEvent(eventId: string): Promise<RaceEvent | undefined> {
-  const database = await getDatabase();
-  const row = await database
-    .prepare("SELECT id, owner_id, name, date, location, discipline FROM events WHERE id = ?")
-    .bind(eventId)
-    .first<EventRow>();
-  return row ? toRaceEvent(row) : undefined;
-}
-
 export async function listEventsOwnedBy(ownerId: string): Promise<RaceEvent[]> {
   const database = await getDatabase();
   const { results } = await database

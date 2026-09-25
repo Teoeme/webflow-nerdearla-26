@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { findEvent } from "@/db/events";
+import { findOwnedEvent } from "@/db/events";
 import { findResult } from "@/db/results";
 import { ResultForm } from "@/features/results/result-form";
 import { toClientResultsMessages } from "@/features/results/client-messages";
@@ -12,10 +12,11 @@ export default async function ResultFormPage({
   params: Promise<{ eventId: string }>;
 }) {
   const { eventId } = await params;
-  const event = await findEvent(eventId);
+  const athlete = await getCurrentAthlete();
+  const event = await findOwnedEvent(eventId, athlete.id);
   if (!event) notFound();
 
-  const [athlete, dictionary] = await Promise.all([getCurrentAthlete(), getDictionary()]);
+  const dictionary = await getDictionary();
   const messages = dictionary.results;
   const existingResult = await findResult(athlete.id, event.id);
 
