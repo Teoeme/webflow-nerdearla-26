@@ -112,8 +112,8 @@ Paste into `src/app/globals.css`. Tailwind generates `bg-background`, `text-acce
     pointer-events: none;
     border-radius: inherit;
     background:
-      linear-gradient(270deg, var(--color-glow), transparent) right bottom / 45% 1px no-repeat,
-      linear-gradient(0deg, var(--color-glow), transparent) right bottom / 1px 45% no-repeat;
+      linear-gradient(270deg, var(--color-glow), transparent) right bottom / min(45%, 12rem) 1px no-repeat,
+      linear-gradient(0deg, var(--color-glow), transparent) right bottom / 1px min(45%, 6rem) no-repeat;
   }
 
   /* Light the corner casts into the panel. */
