@@ -10,5 +10,19 @@
   },
   "observability": {
     "enabled": true
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "racebook",
+      "database_id": "racebook-local",
+      "migrations_dir": "./src/db/migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "PHOTOS",
+      "bucket_name": "racebook-photos"
+    }
+  ]
 }
