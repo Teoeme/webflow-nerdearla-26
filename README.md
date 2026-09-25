@@ -34,7 +34,7 @@ they accept it and the photo moves to their gallery for that same event.
 | English and Spanish UI | In | Language switcher, cookie-based. The jury speaks both. See `AGENTS.md` |
 | Metrics from a watch screenshot (AI vision) | Stretch | Upload a Garmin/Strava/Coros summary screenshot, a vision model extracts the metrics. Replaces a real Garmin integration. First thing to cut if late. |
 | Real authentication | Out | Simulated users with a "View as…" switcher (cookie). Said openly in the pitch. |
-| Tagging people in photos | Out | Only if time is left over |
+| Tagging people in photos | In | The photo stays with its owner and also appears in the tagged athlete's event |
 | Video | Out | |
 | Garmin Connect API | Out | Requires developer approval. Roadmap item for the pitch. |
 
@@ -51,23 +51,31 @@ they accept it and the photo moves to their gallery for that same event.
 
 ## Data model
 
-Key decision: **the event is shared, not per user.** Transferring a photo only changes its
-`owner_id`, and it shows up in the recipient's gallery for the same event.
+Key decision: **events are private.** Each athlete keeps their own record; nobody sees
+another athlete's events or results. Photos cross between athletes only when the owner
+sends them, and the recipient decides which of their events they go to.
 
 ```
 athletes   (id, name, avatar_url)                       -- 3 seeded users
-events     (id, name, date, location, discipline)       -- shared catalog
+events     (id, owner_id, name, date, location, discipline)
 results    (id, athlete_id, event_id, place, time_seconds, medal,
             distance_km, pace_seconds_per_km, avg_heart_rate, elevation_m)
 photos     (id, event_id, owner_id, uploader_id, storage_key, created_at)
 transfers  (id, photo_id, from_athlete_id, to_athlete_id,
             status: pending | accepted | rejected, created_at, resolved_at)
+photo_tags (id, photo_id, athlete_id, tagged_by_id,
+            status: pending | accepted | rejected, event_id, created_at, resolved_at)
 ```
 
 Rules:
-- Only the current owner can request a transfer of a photo.
-- A photo can have at most one `pending` transfer.
-- Accepting sets `photos.owner_id = to_athlete_id` and resolves the transfer, atomically.
+- Only the current owner can transfer or tag a photo.
+- **Transfer** moves the photo: on accept, `owner_id` and `event_id` change to the
+  recipient and the event they choose.
+- **Tag** shares it: the photo stays with its owner and also appears in the tagged
+  athlete's gallery, in the event they choose (`photo_tags.event_id`).
+- On accept, the destination is one of the recipient's events or a new one prefilled
+  from the sender's event. Accepting is atomic.
+- A photo has at most one `pending` transfer, and one open tag per athlete.
 
 ## Plan (ART)
 
