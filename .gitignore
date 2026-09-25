@@ -1,0 +1,9 @@
+# Local tooling state: never commit (the repository is public)
+.atl/
+.claude/
+.DS_Store
+
+# Secrets
+.env
+.env*
+.dev.vars*

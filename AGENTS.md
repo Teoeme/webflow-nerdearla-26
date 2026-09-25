@@ -4,6 +4,27 @@ Read `README.md` first: it holds the contest rules, scope, data model and plan.
 
 **Hard deadline: 2026-09-25, 23:59 ART.** Prefer working, deployed and simple over clever.
 
+## Public repository
+
+This repository is **public**. Everything committed, including history, commit messages and
+plans, can be read by anyone. Git history is permanent: deleting a file later does not
+remove it.
+
+Never commit:
+
+- Secrets of any kind: API keys (including the AI model key for ai-capture), tokens,
+  passwords, `.env` / `.dev.vars` files. Secrets live only in Webflow Cloud environment
+  variables and in ignored local files.
+- Local tooling state: `.atl/`, `.wrangler/`, `.open-next/`, `.claude/`, editor folders.
+- Personal data: emails, names or paths of your machine (`/Users/...`), real people's
+  photos. Seed data uses fictional athletes only.
+- References to other projects, clients or employers, in code, docs, plans or commits.
+  This project is only Racebook.
+
+Before every commit, check `git status` and the staged diff (`git diff --cached`). Stage
+files by name, not with `git add -A` / `git add .`. If something sensitive was committed,
+stop and report it instead of trying to hide it with a new commit.
+
 ## Parallel work
 
 Several agents work on this repo at the same time. To avoid stepping on each other:
