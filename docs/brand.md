@@ -14,8 +14,8 @@ Dark only. There is no light theme.
 | `field` | `#0D0E11` | Input fill |
 | `line` | `#22252A` | Dividers, input borders |
 | `rim` | white at 6% | Border of cards and panels, almost invisible |
-| `glow` | `#3D7BFF` at 70% | Light strip on the top edge of cards and panels |
-| `glow-haze` | `#3D7BFF` at 7% | Faint light cast by the strip into the panel |
+| `glow` | `#3D7BFF` at 70% | Corner light of cards and panels |
+| `glow-haze` | `#3D7BFF` at 7% | Faint light cast by the corner light into the panel |
 | `text-muted` | `#8B9099` | Secondary text, labels, metadata |
 | `text` | `#EEF0F3` | Primary text |
 | `accent` | `#3D7BFF` | Emphasis: primary action, links, active state, key numbers |
@@ -62,9 +62,10 @@ extra CSS skew.
 
 - Radius: `4px` for everything (buttons, inputs, cards, photos). Sharp and sporty.
 - Cards and panels (the `panel` utility): `surface` gradient, `1px` border in `rim`, and a
-  neon tube of light on the top edge. The light is a `1px` strip in `glow` that fades out
-  toward both ends, plus a `glow-haze` that falls a few pixels into the panel. It must read
-  as light, not as a blue border; if the edge looks outlined, it is too strong.
+  neon light in the bottom-right corner. The light is a `1px` line in `glow` that starts at
+  the corner and fades out along the bottom and right edges, plus a `glow-haze` that falls
+  into the panel from that corner. It must read as light, not as a blue border; if the edge
+  looks outlined, it is too strong.
 - Inputs: flat `field` fill with a `1px` border in `line`; the border turns `accent`
   on focus.
 - Dividers inside a card use `line`. No drop shadows.
@@ -103,17 +104,19 @@ Paste into `src/app/globals.css`. Tailwind generates `bg-background`, `text-acce
   border-radius: var(--radius-sm);
   background-image: linear-gradient(160deg, #1a1d22 0%, #0d0e11 100%);
 
-  /* Neon tube: a 1px strip of light on the top edge, fading out at both ends. */
+  /* Neon corner light: 1px lines that fade out from the bottom-right corner. */
   &::before {
     content: "";
     position: absolute;
-    top: -1px;
-    inset-inline: 18%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--color-glow), transparent);
+    inset: -1px;
+    pointer-events: none;
+    border-radius: inherit;
+    background:
+      linear-gradient(270deg, var(--color-glow), transparent) right bottom / 45% 1px no-repeat,
+      linear-gradient(0deg, var(--color-glow), transparent) right bottom / 1px 45% no-repeat;
   }
 
-  /* Light the tube casts into the panel. */
+  /* Light the corner casts into the panel. */
   &::after {
     content: "";
     position: absolute;
@@ -121,7 +124,7 @@ Paste into `src/app/globals.css`. Tailwind generates `bg-background`, `text-acce
     z-index: -1;
     pointer-events: none;
     border-radius: inherit;
-    background: radial-gradient(55% 72px at 50% 0, var(--color-glow-haze), transparent);
+    background: radial-gradient(60% 60% at 100% 100%, var(--color-glow-haze), transparent);
   }
 }
 
