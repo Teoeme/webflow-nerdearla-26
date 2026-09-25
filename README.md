@@ -1,4 +1,4 @@
-# Podium — athlete results portfolio
+# Racebook — the athlete’s book of races
 
 Entry for the **Webflow App Challenge · Nerdearla 2026** (13th edition, Buenos Aires).
 
@@ -20,7 +20,7 @@ back to the friends who actually appear in them.
 
 At a race, a group of friends takes turns: while one competes, the others take the photos.
 Everyone ends up with a gallery "polluted" with photos of other people, and missing the
-photos of themselves. Podium lets you **transfer ownership** of a photo to the person in it;
+photos of themselves. Racebook lets you **transfer ownership** of a photo to the person in it;
 they accept it and the photo moves to their gallery for that same event.
 
 ## Scope (MVP for tonight)
