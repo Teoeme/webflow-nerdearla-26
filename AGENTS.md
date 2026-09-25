@@ -8,15 +8,17 @@ Read `README.md` first: it holds the contest rules, scope, data model and plan.
 
 Several agents work on this repo at the same time. To avoid stepping on each other:
 
-- **One agent, one worktree, one branch.** Never work on `main` directly.
+- **Branches:** `develop` is the integration branch; `main` is production and only receives
+  merges from `develop`. Never work on `develop` or `main` directly.
+- **One agent, one worktree, one branch**, created from `develop`.
   ```sh
-  git worktree add ../webflow-nerdearla-26-<area> -b feat/<area>
+  git worktree add ../webflow-nerdearla-26-<area> -b feat/<area> develop
   ```
 - **Stay inside your area** (table below). If you need a change in another area, stop and
   report it instead of editing it.
-- **Merge to `main` small and often** (rebase on `main` first). `main` deploys to Webflow
-  Cloud on every push, so it must always build.
-- Run `npm run build` before merging. A broken `main` blocks everyone.
+- **Merge to `develop` small and often** (rebase on `develop` first).
+- The app lives in `racebook/`. Run `npm run build` there before merging. A broken
+  `develop` blocks everyone, and `main` is meant to deploy to Webflow Cloud on every push.
 
 | Area | Branch | Owns |
 |---|---|---|
