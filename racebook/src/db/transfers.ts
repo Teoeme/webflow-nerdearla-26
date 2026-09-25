@@ -46,8 +46,11 @@ function toIncomingTransfer(row: IncomingTransferRow): IncomingTransfer {
   };
 }
 
-function isUniqueConstraintViolation(error: unknown): boolean {
-  return error instanceof Error && error.message.includes("UNIQUE constraint failed");
+// SQLite's message when transfers_one_pending_per_photo rejects a second pending row.
+const PENDING_TRANSFER_CONFLICT = "UNIQUE constraint failed: transfers.photo_id";
+
+function isPendingTransferConflict(error: unknown): boolean {
+  return error instanceof Error && error.message.includes(PENDING_TRANSFER_CONFLICT);
 }
 
 export async function listIncomingTransfers(athleteId: string): Promise<IncomingTransfer[]> {
@@ -112,7 +115,7 @@ export async function requestTransfer(input: {
 
     return insertResult.meta.changes > 0 ? "requested" : "not_owner";
   } catch (error) {
-    if (isUniqueConstraintViolation(error)) return "already_pending";
+    if (isPendingTransferConflict(error)) return "already_pending";
     throw error;
   }
 }
