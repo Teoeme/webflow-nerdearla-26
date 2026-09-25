@@ -1,6 +1,6 @@
 # 01 · platform · Foundation
 
-**Status:** todo
+**Status:** done
 
 ## Goal
 
