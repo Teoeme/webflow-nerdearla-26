@@ -14,8 +14,9 @@ export const resultsEs: ResultsMessages = {
       message: "Todavía no cargaste ninguna carrera.",
       cta: "Cargá una carrera",
     },
-    otherEvents: {
-      title: "Otros eventos",
+    card: {
+      noResultYet: "Todavía sin resultado",
+      logResultCta: "Cargá tu resultado",
     },
   },
   eventDetail: {
@@ -31,15 +32,6 @@ export const resultsEs: ResultsMessages = {
       pace: "Ritmo",
       avgHeartRate: "Frecuencia cardíaca (lpm)",
       elevation: "Desnivel (m)",
-    },
-    resultsTable: {
-      title: "Resultados",
-      place: "Puesto",
-      athlete: "Atleta",
-      time: "Tiempo",
-      pace: "Ritmo",
-      medal: "Medalla",
-      noResult: "—",
     },
   },
   resultForm: {
