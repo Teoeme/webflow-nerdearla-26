@@ -1,6 +1,6 @@
 # 03 · results · Medal board
 
-**Status:** todo
+**Status:** done
 
 ## Goal
 
