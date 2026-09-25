@@ -22,7 +22,8 @@ Several agents work on this repo at the same time. To avoid stepping on each oth
 
 | Area | Branch | Owns |
 |---|---|---|
-| platform | `feat/platform` | Webflow Cloud config, bindings, `db/` (schema, migrations, seed), user switcher, layout |
+| platform | `feat/platform` | Webflow Cloud config, bindings, `src/db/` (connection, types, schema, migrations, seed), session (current athlete, locale), i18n plumbing, fonts, layout and switchers |
+| ui | `feat/ui` | Visual identity in code: `globals.css` tokens and the shared components in `src/components/ui/` (see `docs/brand.md`) |
 | results | `feat/results` | Medal board: event list, event detail, result form |
 | gallery | `feat/gallery` | Photo upload, gallery, transfers (request, inbox, accept/reject) |
 | ai-capture | `feat/ai-capture` | Screenshot → metrics extraction |
@@ -38,7 +39,7 @@ another one costs more than a plan that is a bit less ambitious.
 - **Scopes never overlap.** A plan lists the exact files and folders it creates or modifies.
   Two plans that can run at the same time must not share a single file. If they would, split
   the work differently or make one plan depend on the other.
-- **Contracts first.** Whatever several plans share (schema, types, `db/` function signatures,
+- **Contracts first.** Whatever several plans share (schema, types, `src/db/` function signatures,
   the current-athlete function, routes) is defined in one plan, usually `platform`. The other
   plans quote the exact signature they consume, so they can start before it is merged.
 - **The plan is self-contained.** The executor has no memory of the planning conversation.
@@ -71,9 +72,9 @@ Executors:
 ## Shared contracts
 
 - **The schema is owned by `platform`.** Other areas consume it; they don't change it.
-  Need a new column? Ask for it. Migrations are numbered files in `db/migrations/`
+  Need a new column? Ask for it. Migrations are numbered files in `racebook/src/db/migrations/`
   (`0001_init.sql`, `0002_...`); never edit a migration that is already on `develop`.
-- Data access goes through `db/` modules, one per entity. UI components don't write SQL.
+- Data access goes through `src/db/` modules, one per entity. UI components don't write SQL.
 - The current athlete comes from a single function in the platform area (cookie-based,
   simulated users). Don't read the cookie anywhere else.
 
