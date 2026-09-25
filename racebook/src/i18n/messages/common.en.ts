@@ -1,5 +1,4 @@
 export const commonEn = {
-  wordmark: "RACEBOOK",
   nav: {
     medalBoard: "Medal board",
     inbox: "Inbox",

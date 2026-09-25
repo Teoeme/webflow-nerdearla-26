@@ -1,7 +1,6 @@
 import type { CommonMessages } from "./common.en";
 
 export const commonEs: CommonMessages = {
-  wordmark: "RACEBOOK",
   nav: {
     medalBoard: "Medallero",
     inbox: "Bandeja",

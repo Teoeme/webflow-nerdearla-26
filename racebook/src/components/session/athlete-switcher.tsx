@@ -2,6 +2,7 @@
 
 import type { Athlete } from "../../db/types";
 import { switchAthlete } from "../../session/actions";
+import { Select } from "../ui/field";
 
 type AthleteSwitcherProps = {
   athletes: Athlete[];
@@ -12,9 +13,9 @@ type AthleteSwitcherProps = {
 export function AthleteSwitcher({ athletes, currentAthleteId, label }: AthleteSwitcherProps) {
   return (
     <form action={switchAthlete}>
-      <label>
-        {label}
-        <select
+      <label className="flex items-center gap-3">
+        <span className="text-label text-text-muted">{label}</span>
+        <Select
           key={currentAthleteId}
           name="athleteId"
           defaultValue={currentAthleteId}
@@ -25,7 +26,7 @@ export function AthleteSwitcher({ athletes, currentAthleteId, label }: AthleteSw
               {athlete.name}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
     </form>
   );
