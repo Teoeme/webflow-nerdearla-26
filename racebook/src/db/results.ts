@@ -65,6 +65,9 @@ export async function listResultsForAthlete(athleteId: string): Promise<AthleteR
     ...toRaceResult(row),
     event: {
       id: row.event_id,
+      // A result always lives on its own athlete's private copy of the event
+      // (see migration 0003), so the owner is the same athlete as the result.
+      ownerId: row.athlete_id,
       name: row.event_name,
       date: row.event_date,
       location: row.event_location,

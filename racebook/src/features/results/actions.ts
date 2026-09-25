@@ -125,7 +125,8 @@ export async function createEventAction(
     return { errors };
   }
 
-  const event = await createEvent({ name, date, location, discipline: disciplineInput as Discipline });
+  const athlete = await getCurrentAthlete();
+  const event = await createEvent(athlete.id, { name, date, location, discipline: disciplineInput as Discipline });
   revalidatePath("/");
   redirect(`/events/${event.id}/result`);
 }
