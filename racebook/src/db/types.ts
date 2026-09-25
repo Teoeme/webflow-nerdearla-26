@@ -1,11 +1,13 @@
 export type Discipline = "road_running" | "trail_running" | "triathlon" | "cycling" | "swimming";
 export type Medal = "gold" | "silver" | "bronze";
 export type TransferStatus = "pending" | "accepted" | "rejected";
+export type TagStatus = "pending" | "accepted" | "rejected";
 
 export type Athlete = { id: string; name: string; avatarUrl: string | null };
 
 export type RaceEvent = {
   id: string;
+  ownerId: string;
   name: string;
   date: string; // YYYY-MM-DD
   location: string;
@@ -40,6 +42,17 @@ export type Transfer = {
   fromAthleteId: string;
   toAthleteId: string;
   status: TransferStatus;
+  createdAt: string;
+  resolvedAt: string | null;
+};
+
+export type PhotoTag = {
+  id: string;
+  photoId: string;
+  athleteId: string; // the tagged athlete
+  taggedById: string; // the photo owner who tagged
+  status: TagStatus;
+  eventId: string | null; // the tagged athlete's event, set on accept
   createdAt: string;
   resolvedAt: string | null;
 };
