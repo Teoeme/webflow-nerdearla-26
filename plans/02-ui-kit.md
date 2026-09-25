@@ -1,6 +1,6 @@
 # 02 · ui · Kit
 
-**Status:** todo
+**Status:** done
 
 ## Goal
 
