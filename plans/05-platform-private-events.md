@@ -1,6 +1,6 @@
 # 05 · platform · Private events and photo tags (schema)
 
-**Status:** todo
+**Status:** done
 
 ## Goal
 
