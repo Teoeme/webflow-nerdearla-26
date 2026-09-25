@@ -1,6 +1,6 @@
 # 04 · gallery · Photos and transfers
 
-**Status:** todo
+**Status:** done
 
 ## Goal
 
