@@ -1,6 +1,6 @@
 # 07 · gallery · Batch upload, lightbox, tags and destination events
 
-**Status:** todo
+**Status:** done
 
 ## Goal
 

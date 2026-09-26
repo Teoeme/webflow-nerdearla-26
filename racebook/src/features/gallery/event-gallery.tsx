@@ -1,12 +1,14 @@
-import { Suspense } from "react";
+import type { JSX } from "react";
 import { listAthletes } from "@/db/athletes";
-import { findEventName, listPhotosOwnedBy } from "@/db/photos";
+import { findOwnedEvent } from "@/db/events";
+import { listOpenTagsOnEvent, type PhotoTagWithName } from "@/db/photo-tags";
+import { listEventPhotos } from "@/db/photos";
 import { listPendingTransfersFrom } from "@/db/transfers";
 import type { Athlete } from "@/db/types";
 import { getDictionary } from "@/i18n/dictionary";
 import { getCurrentAthlete } from "@/session/current-athlete";
+import { LightboxProvider, type LightboxPhoto } from "./lightbox";
 import { PhotoCard } from "./photo-card";
-import { UploadErrorBanner } from "./upload-error-banner";
 import { UploadForm } from "./upload-form";
 
 function toPendingRecipientByPhotoId(
@@ -22,46 +24,65 @@ function toPendingRecipientByPhotoId(
   return new Map(entries);
 }
 
-export async function EventGallery({ eventId }: { eventId: string }) {
+function toTagsByPhotoId(tags: PhotoTagWithName[]): Map<string, PhotoTagWithName[]> {
+  const tagsByPhotoId = new Map<string, PhotoTagWithName[]>();
+  for (const tag of tags) {
+    const tagsForPhoto = tagsByPhotoId.get(tag.photoId) ?? [];
+    tagsForPhoto.push(tag);
+    tagsByPhotoId.set(tag.photoId, tagsForPhoto);
+  }
+  return tagsByPhotoId;
+}
+
+export async function EventGallery({ eventId }: { eventId: string }): Promise<JSX.Element> {
   const [currentAthlete, dictionary] = await Promise.all([getCurrentAthlete(), getDictionary()]);
   const messages = dictionary.gallery.eventGallery;
 
-  const [photos, athletes, eventName, pendingTransfers] = await Promise.all([
-    listPhotosOwnedBy(currentAthlete.id, eventId),
+  const [photos, athletes, event, pendingTransfers, openTags] = await Promise.all([
+    listEventPhotos(currentAthlete.id, eventId),
     listAthletes(),
-    findEventName(eventId),
+    findOwnedEvent(eventId, currentAthlete.id),
     listPendingTransfersFrom(currentAthlete.id, eventId),
+    listOpenTagsOnEvent(currentAthlete.id, eventId),
   ]);
 
-  const athleteById = new Map(athletes.map((athlete) => [athlete.id, athlete]));
+  const athleteById = new Map(athletes.map((athlete) => [athlete.id, athlete] as const));
   const transferCandidates = athletes.filter((athlete) => athlete.id !== currentAthlete.id);
   const pendingRecipientByPhotoId = toPendingRecipientByPhotoId(pendingTransfers, athleteById);
-  const displayEventName = eventName ?? eventId;
+  const tagsByPhotoId = toTagsByPhotoId(openTags);
+  const displayEventName = event?.name ?? eventId;
+
+  const lightboxPhotos: LightboxPhoto[] = photos.map((photo) => ({
+    id: photo.id,
+    src: `/api/photos/${photo.id}`,
+    alt: messages.photoAlt(displayEventName),
+    taggedByLabel: photo.taggedByName ? messages.taggedBy(photo.taggedByName) : null,
+  }));
 
   return (
     <section className="flex flex-col gap-4">
       <h2 className="text-heading text-xl">{messages.heading}</h2>
-      <Suspense fallback={null}>
-        <UploadErrorBanner message={messages.uploadInvalid} />
-      </Suspense>
       {photos.length === 0 ? (
         <p className="text-text-muted">{messages.emptyState}</p>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-          {photos.map((photo) => (
-            <PhotoCard
-              key={photo.id}
-              photo={photo}
-              eventId={eventId}
-              eventName={displayEventName}
-              pendingRecipient={pendingRecipientByPhotoId.get(photo.id)}
-              transferCandidates={transferCandidates}
-              messages={messages}
-            />
-          ))}
-        </div>
+        <LightboxProvider photos={lightboxPhotos} labels={messages.lightbox}>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+            {photos.map((photo) => (
+              <PhotoCard
+                key={photo.id}
+                photo={photo}
+                eventId={eventId}
+                eventName={displayEventName}
+                pendingRecipient={pendingRecipientByPhotoId.get(photo.id)}
+                tags={tagsByPhotoId.get(photo.id) ?? []}
+                transferCandidates={transferCandidates}
+                messages={messages}
+              />
+            ))}
+          </div>
+        </LightboxProvider>
       )}
-      <UploadForm eventId={eventId} messages={messages} />
+      <UploadForm eventId={eventId} messages={messages.upload} />
     </section>
   );
 }

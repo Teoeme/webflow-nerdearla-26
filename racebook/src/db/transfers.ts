@@ -1,10 +1,11 @@
 import { getDatabase } from "./connection";
-import type { Transfer } from "./types";
+import type { EventDetails } from "./events";
+import { resolveDestination, type Destination } from "./photos";
+import type { Discipline, Transfer } from "./types";
 
 export type IncomingTransfer = Transfer & {
   fromAthleteName: string;
-  eventId: string;
-  eventName: string;
+  sourceEvent: EventDetails;
 };
 
 export type TransferRequestOutcome = "requested" | "not_owner" | "already_pending" | "same_athlete";
@@ -21,8 +22,10 @@ type TransferRow = {
 
 type IncomingTransferRow = TransferRow & {
   from_athlete_name: string;
-  event_id: string;
   event_name: string;
+  event_date: string;
+  event_location: string;
+  event_discipline: Discipline;
 };
 
 function toTransfer(row: TransferRow): Transfer {
@@ -41,8 +44,12 @@ function toIncomingTransfer(row: IncomingTransferRow): IncomingTransfer {
   return {
     ...toTransfer(row),
     fromAthleteName: row.from_athlete_name,
-    eventId: row.event_id,
-    eventName: row.event_name,
+    sourceEvent: {
+      name: row.event_name,
+      date: row.event_date,
+      location: row.event_location,
+      discipline: row.event_discipline,
+    },
   };
 }
 
@@ -60,8 +67,8 @@ export async function listIncomingTransfers(athleteId: string): Promise<Incoming
       `SELECT
          t.id, t.photo_id, t.from_athlete_id, t.to_athlete_id, t.status, t.created_at, t.resolved_at,
          a.name AS from_athlete_name,
-         p.event_id AS event_id,
-         e.name AS event_name
+         e.name AS event_name, e.date AS event_date, e.location AS event_location,
+         e.discipline AS event_discipline
        FROM transfers t
        JOIN photos p ON p.id = t.photo_id
        JOIN athletes a ON a.id = t.from_athlete_id
@@ -120,30 +127,45 @@ export async function requestTransfer(input: {
   }
 }
 
-export async function acceptTransfer(transferId: string, recipientId: string): Promise<boolean> {
+export async function acceptTransfer(
+  transferId: string,
+  recipientId: string,
+  destination: Destination,
+): Promise<boolean> {
   const database = await getDatabase();
-  const resolvePendingTransferToOwner = database.prepare(
-    `UPDATE photos
-     SET owner_id = (
-       SELECT to_athlete_id FROM transfers WHERE id = ? AND status = 'pending' AND to_athlete_id = ?
-     )
-     WHERE id = (
-       SELECT photo_id FROM transfers WHERE id = ? AND status = 'pending' AND to_athlete_id = ?
-     )`,
-  ).bind(transferId, recipientId, transferId, recipientId);
+  const { statements: destinationStatements, eventId: destinationEventId } = resolveDestination(
+    database,
+    recipientId,
+    destination,
+  );
 
-  const markTransferAccepted = database.prepare(
-    `UPDATE transfers
-     SET status = 'accepted', resolved_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-     WHERE id = ? AND status = 'pending' AND to_athlete_id = ?`,
-  ).bind(transferId, recipientId);
+  const movePhotoToRecipient = database
+    .prepare(
+      `UPDATE photos
+       SET owner_id = ?, event_id = ?
+       WHERE id = (
+         SELECT photo_id FROM transfers WHERE id = ? AND status = 'pending' AND to_athlete_id = ?
+       )
+       AND EXISTS (SELECT 1 FROM events WHERE id = ? AND owner_id = ?)`,
+    )
+    .bind(recipientId, destinationEventId, transferId, recipientId, destinationEventId, recipientId);
 
-  const [, transferUpdate] = await database.batch([
-    resolvePendingTransferToOwner,
+  const markTransferAccepted = database
+    .prepare(
+      `UPDATE transfers
+       SET status = 'accepted', resolved_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+       WHERE id = ? AND status = 'pending' AND to_athlete_id = ?
+       AND EXISTS (SELECT 1 FROM events WHERE id = ? AND owner_id = ?)`,
+    )
+    .bind(transferId, recipientId, destinationEventId, recipientId);
+
+  const batchResults = await database.batch([
+    ...destinationStatements,
+    movePhotoToRecipient,
     markTransferAccepted,
   ]);
 
-  return transferUpdate.meta.changes > 0;
+  return batchResults[batchResults.length - 1].meta.changes > 0;
 }
 
 export async function rejectTransfer(transferId: string, recipientId: string): Promise<boolean> {
