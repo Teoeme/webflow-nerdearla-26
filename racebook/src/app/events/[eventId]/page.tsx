@@ -54,14 +54,12 @@ export default async function EventDetailPage({
         </div>
       </div>
 
-      <section className="panel flex flex-wrap items-center gap-6 p-5">
+      <section className="panel flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="sr-only">{messages.eventDetail.myResult.title}</h2>
         {myResultStats.length > 0 ? (
-          <div className="flex flex-1 flex-wrap items-center divide-x divide-line">
+          <div className="grid flex-1 grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-6">
             {myResultStats.map((stat) => (
-              <div key={stat.label} className="px-6 first:pl-0 last:pr-0">
-                <Stat label={stat.label} value={stat.value} />
-              </div>
+              <Stat key={stat.label} label={stat.label} value={stat.value} />
             ))}
           </div>
         ) : (
