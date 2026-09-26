@@ -28,16 +28,16 @@ Everyone ends up with a gallery "polluted" with photos of other people, and miss
 photos of themselves. Racebook lets you **transfer ownership** of a photo to the person in it;
 they accept it and the photo moves to their gallery for that same event.
 
-## Scope (MVP for tonight)
+## Scope (shipped)
 
 | Feature | Status | Notes |
 |---|---|---|
 | Medal board: events + results | In | Event, date, discipline, place, time, medal |
 | Performance metrics | In | Manual entry: distance, pace, avg HR, elevation, time |
-| Photo gallery per event | In | Photos only, no video |
+| Photo gallery per event | In | Batch upload with drag and drop, lightbox, event cover, delete |
 | Photo ownership transfer | In — **hero feature** | Request → recipient accepts/rejects → owner changes |
 | English and Spanish UI | In | Language switcher, cookie-based. The jury speaks both. See `AGENTS.md` |
-| Metrics from a watch screenshot (AI vision) | Stretch | Upload a Garmin/Strava/Coros summary screenshot, a vision model extracts the metrics. Replaces a real Garmin integration. First thing to cut if late. |
+| Metrics from a watch screenshot (AI vision) | In | Google Gemini reads time, distance, avg HR and elevation from a Garmin/Strava/Coros summary; the form fills itself and marks what the AI filled. Samples in `/samples/`. |
 | Real authentication | Out | Simulated users with a "View as…" switcher (cookie). Said openly in the pitch. |
 | Tagging people in photos | In | The photo stays with its owner and also appears in the tagged athlete's event |
 | Video | Out | |
@@ -52,6 +52,10 @@ they accept it and the photo moves to their gallery for that same event.
 - Storage provided by Webflow Cloud (available by default):
   - **SQLite** — relational data.
   - **Object Storage** — photo files.
+- **Google Gemini** (vision + structured JSON) for screenshot metrics; key as a Webflow Cloud secret.
+- **Radix** primitives (Select, Dialog, Menu) styled with the app's own tokens (`docs/brand.md`).
+- Next's Server Actions need `serverActions.allowedOrigins` with the public domain behind the
+  Webflow Cloud proxy (see `racebook/next.config.ts`).
 - Docs: https://developers.webflow.com/webflow-cloud/intro
 
 ## Data model
@@ -82,25 +86,21 @@ Rules:
   from the sender's event. Accepting is atomic.
 - A photo has at most one `pending` transfer, and one open tag per athlete.
 
-## Plan (ART)
+## How it was built
 
-| Time | Block |
-|---|---|
-| 19:10–19:40 | Scaffold with `webflow cloud init`, push, **first deploy**, SQLite + storage bindings |
-| 19:40–20:10 | Schema, seed, user switcher |
-| 20:10–21:00 | Medal board: list, detail, result form |
-| 21:00–21:50 | Gallery, upload, transfers (request, inbox, accept/reject) |
-| 21:50–22:30 | AI screenshot → metrics (stretch) |
-| 22:30–23:15 | Visual polish, good-looking seed data |
-| 23:15–23:40 | Final deploy, test on the public URL, **submit** |
-
-Cut order if late: AI screenshot first, then polish. Never cut the transfer flow.
+One human directing a team of AI coding agents in parallel: a planner session wrote the
+plans in [`plans/`](plans/) (one area, one branch, disjoint files, contracts first), executor
+agents built each plan in its own git worktree, fresh-context agents reviewed every diff, and
+the orchestrator merged to `develop` and shipped `main` to Webflow Cloud. Rules for agents
+live in [`AGENTS.md`](AGENTS.md).
 
 ## Getting started
 
 ```sh
-npx @webflow/webflow-cli cloud init   # scaffold the Next.js app (interactive, needs login)
+cd racebook
 npm install
+npx wrangler d1 migrations apply DB --local   # local SQLite with the seed
+echo "GEMINI_API_KEY=..." > .dev.vars         # optional, for the screenshot reader
 npm run dev
 ```
 
