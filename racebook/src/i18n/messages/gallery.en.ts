@@ -20,6 +20,8 @@ export const galleryEn = {
     share: {
       action: "Share",
       setCover: "Set as cover",
+      deletePhoto: "Delete photo",
+      confirmDelete: "Delete this photo? This cannot be undone.",
       modalTitle: "Share this photo",
       closeLabel: "Close",
       modeSend: { label: "Send it to them", description: "Moves the photo to their gallery" },

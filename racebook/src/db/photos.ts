@@ -90,6 +90,27 @@ export async function findPhoto(photoId: string): Promise<Photo | undefined> {
   return row ? toPhoto(row) : undefined;
 }
 
+// Deletes a photo the athlete owns, together with every row that points at it (its
+// transfers and tags, and the cover of any event), in one transaction. Returns the
+// storage key to remove from the bucket, or undefined when the photo isn't theirs.
+export async function deleteOwnedPhoto(photoId: string, ownerId: string): Promise<string | undefined> {
+  const database = await getDatabase();
+  const photo = await findPhoto(photoId);
+  if (!photo || photo.ownerId !== ownerId) return undefined;
+
+  const ownedPhotoGuard = "EXISTS (SELECT 1 FROM photos WHERE id = ? AND owner_id = ?)";
+  const results = await database.batch([
+    database.prepare(`DELETE FROM photo_tags WHERE photo_id = ? AND ${ownedPhotoGuard}`).bind(photoId, photoId, ownerId),
+    database.prepare(`DELETE FROM transfers WHERE photo_id = ? AND ${ownedPhotoGuard}`).bind(photoId, photoId, ownerId),
+    database
+      .prepare(`UPDATE events SET cover_photo_id = NULL WHERE cover_photo_id = ? AND ${ownedPhotoGuard}`)
+      .bind(photoId, photoId, ownerId),
+    database.prepare("DELETE FROM photos WHERE id = ? AND owner_id = ?").bind(photoId, ownerId),
+  ]);
+  const wasDeleted = results[results.length - 1].meta.changes > 0;
+  return wasDeleted ? photo.storageKey : undefined;
+}
+
 export async function createPhoto(input: PhotoInput): Promise<void> {
   const database = await getDatabase();
   await database

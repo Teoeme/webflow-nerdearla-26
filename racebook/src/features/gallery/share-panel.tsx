@@ -18,6 +18,8 @@ export type ShareCandidate = { id: string; name: string; sendLabel: string; tagL
 export type ShareMessages = {
   action: string;
   setCover: string;
+  deletePhoto: string;
+  confirmDelete: string;
   modalTitle: string;
   closeLabel: string;
   modeSend: { label: string; description: string };

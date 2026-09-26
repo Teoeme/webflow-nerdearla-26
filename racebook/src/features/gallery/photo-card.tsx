@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { StatusPill } from "@/components/ui/status-pill";
 import { SharePanel } from "./share-panel";
+import { deletePhotoAction } from "./actions";
 import { setEventCoverAction } from "@/features/results/cover-actions";
 import { PhotoThumbnailButton, type LightboxPhoto } from "./lightbox";
 
@@ -22,6 +23,20 @@ function CoverIcon() {
         d="M12 3.5l2.47 5.01 5.53.8-4 3.9.94 5.5L12 16.9l-4.94 2.6.94-5.5-4-3.9 5.53-.8L12 3.5z"
         stroke="currentColor"
         strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function DeleteIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true">
+      <path
+        d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12M10 11v5M14 11v5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
         strokeLinejoin="round"
       />
     </svg>
@@ -85,6 +100,22 @@ export function PhotoCard({ photo }: { photo: LightboxPhoto }) {
               className={iconButtonClassName}
             >
               <CoverIcon />
+            </button>
+          </form>
+          <form
+            action={deletePhotoAction}
+            onSubmit={(event) => {
+              if (!window.confirm(ownerActions.messages.confirmDelete)) event.preventDefault();
+            }}
+          >
+            <input type="hidden" name="photoId" value={photo.id} />
+            <button
+              type="submit"
+              aria-label={ownerActions.messages.deletePhoto}
+              title={ownerActions.messages.deletePhoto}
+              className={iconButtonClassName}
+            >
+              <DeleteIcon />
             </button>
           </form>
           <button

@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import type { DestinationChoice } from "@/db/photos";
+import { deleteOwnedPhoto, type DestinationChoice } from "@/db/photos";
+import { getPhotoBucket } from "@/storage/photo-bucket";
 import { acceptTag, rejectTag, requestTag, type TagRequestOutcome } from "@/db/photo-tags";
 import { acceptTransfer, rejectTransfer, requestTransfer, type TransferRequestOutcome } from "@/db/transfers";
 import { getCurrentAthlete } from "@/session/current-athlete";
@@ -30,6 +31,20 @@ function parseAcceptedDestination(formData: FormData): ResolvedDestination {
   const validation = validateNewEventDetails(formData);
   if (!validation.valid) return { ok: false, errors: validation.errors };
   return { ok: true, choice: { kind: "new", details: validation.details } };
+}
+
+// Deletes one of the current athlete's photos; anything else is ignored.
+export async function deletePhotoAction(formData: FormData): Promise<void> {
+  const photoId = formData.get("photoId");
+  if (typeof photoId !== "string" || !photoId) return;
+
+  const currentAthlete = await getCurrentAthlete();
+  const storageKey = await deleteOwnedPhoto(photoId, currentAthlete.id);
+  if (!storageKey) return;
+
+  const bucket = await getPhotoBucket();
+  await bucket.delete(storageKey);
+  revalidatePath("/", "layout");
 }
 
 export async function requestPhotoTransfer(

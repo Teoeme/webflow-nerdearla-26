@@ -22,6 +22,8 @@ export const galleryEs: GalleryMessages = {
     share: {
       action: "Compartir",
       setCover: "Usar como portada",
+      deletePhoto: "Eliminar foto",
+      confirmDelete: "¿Eliminás esta foto? No se puede deshacer.",
       modalTitle: "Compartir esta foto",
       closeLabel: "Cerrar",
       modeSend: { label: "Mandásela", description: "Mueve la foto a su galería" },
