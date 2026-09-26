@@ -68,6 +68,12 @@ export function LightboxProvider({
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
+  // The native <dialog> renders in the browser's top layer, above a Radix Modal portaled
+  // to `body`. To let Transfer/Tag work from the lightbox, we close this dialog right
+  // before such a modal opens, and reopen it once the modal closes. That `close()` call
+  // fires the dialog's `close` event same as Escape/backdrop would; this flag tells the
+  // handler to skip resetting `openIndex` for that one, deliberate close.
+  const isClosingForActionModalRef = useRef(false);
 
   const open = useCallback(
     (photoId: string) => {
@@ -82,6 +88,24 @@ export function LightboxProvider({
   const close = useCallback(() => {
     setOpenIndex(null);
     triggerRef.current?.focus();
+  }, []);
+
+  const handleDialogClose = useCallback(() => {
+    if (isClosingForActionModalRef.current) {
+      isClosingForActionModalRef.current = false;
+      return;
+    }
+    close();
+  }, [close]);
+
+  const closeForActionModal = useCallback(() => {
+    isClosingForActionModalRef.current = true;
+    dialogRef.current?.close();
+  }, []);
+
+  const reopenAfterActionModal = useCallback(() => {
+    if (!dialogRef.current || dialogRef.current.open) return;
+    dialogRef.current.showModal();
   }, []);
 
   const showPrevious = useCallback(() => {
@@ -119,7 +143,7 @@ export function LightboxProvider({
       {children}
       <dialog
         ref={dialogRef}
-        onClose={close}
+        onClose={handleDialogClose}
         className="panel m-auto flex max-h-[92vh] w-[min(96vw,64rem)] max-w-none flex-col gap-3 bg-background p-4 backdrop:bg-black/80"
       >
         {currentPhoto ? (
@@ -175,7 +199,13 @@ export function LightboxProvider({
                     </div>
                   ) : null}
                   {currentPhoto.ownerActions ? (
-                    <PhotoOwnerActions photoId={currentPhoto.id} ownerActions={currentPhoto.ownerActions} />
+                    <PhotoOwnerActions
+                      photoId={currentPhoto.id}
+                      ownerActions={currentPhoto.ownerActions}
+                      onActionModalOpenChange={(isActionModalOpen) =>
+                        isActionModalOpen ? closeForActionModal() : reopenAfterActionModal()
+                      }
+                    />
                   ) : null}
                 </>
               )}
@@ -208,7 +238,20 @@ export function LightboxProvider({
 // The Transfer/Tag buttons in the lightbox footer open the same Modal as the grid
 // card's menu — a fresh `key` per open discards any outcome message left over from a
 // previous open, without disturbing the currently open instance while it closes.
-function PhotoOwnerActions({ photoId, ownerActions }: { photoId: string; ownerActions: LightboxOwnerActions }) {
+//
+// That Modal is a Radix Dialog portaled to `body`, while the lightbox is a native
+// <dialog> in the browser's top layer: the portal would render underneath it and be
+// unreachable. `onActionModalOpenChange` tells the lightbox to close its own dialog
+// right before this one opens, and reopen it once this one closes.
+function PhotoOwnerActions({
+  photoId,
+  ownerActions,
+  onActionModalOpenChange,
+}: {
+  photoId: string;
+  ownerActions: LightboxOwnerActions;
+  onActionModalOpenChange: (isOpen: boolean) => void;
+}) {
   const [isTransferOpen, setTransferOpen] = useState(false);
   const [transferInstance, setTransferInstance] = useState(0);
   const [isTagOpen, setTagOpen] = useState(false);
@@ -217,11 +260,23 @@ function PhotoOwnerActions({ photoId, ownerActions }: { photoId: string; ownerAc
   function openTransfer(): void {
     setTransferInstance((instance) => instance + 1);
     setTransferOpen(true);
+    onActionModalOpenChange(true);
   }
 
   function openTag(): void {
     setTagInstance((instance) => instance + 1);
     setTagOpen(true);
+    onActionModalOpenChange(true);
+  }
+
+  function handleTransferOpenChange(isOpen: boolean): void {
+    setTransferOpen(isOpen);
+    onActionModalOpenChange(isOpen);
+  }
+
+  function handleTagOpenChange(isOpen: boolean): void {
+    setTagOpen(isOpen);
+    onActionModalOpenChange(isOpen);
   }
 
   return (
@@ -239,7 +294,7 @@ function PhotoOwnerActions({ photoId, ownerActions }: { photoId: string; ownerAc
         <TransferModal
           key={transferInstance}
           open={isTransferOpen}
-          onOpenChange={setTransferOpen}
+          onOpenChange={handleTransferOpenChange}
           photoId={photoId}
           eventId={ownerActions.eventId}
           candidates={ownerActions.candidates}
@@ -249,7 +304,7 @@ function PhotoOwnerActions({ photoId, ownerActions }: { photoId: string; ownerAc
       <TagModal
         key={tagInstance}
         open={isTagOpen}
-        onOpenChange={setTagOpen}
+        onOpenChange={handleTagOpenChange}
         photoId={photoId}
         eventId={ownerActions.eventId}
         candidates={ownerActions.candidates}
