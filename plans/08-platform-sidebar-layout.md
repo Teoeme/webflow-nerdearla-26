@@ -1,6 +1,6 @@
 # 08 · platform · Sidebar layout
 
-**Status:** todo
+**Status:** done
 
 ## Goal
 
