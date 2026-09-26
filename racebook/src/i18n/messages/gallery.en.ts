@@ -8,7 +8,10 @@ export const galleryEn = {
       button: "Upload photos",
       dropZone: "Drop photos here, or",
       browseFiles: "browse files",
-      progress: (done: number, total: number) => `${done} of ${total} uploaded`,
+      // A template, not a function: UploadForm is a client component, and a function
+      // can't cross the server/client boundary as a prop (only the messages it needs
+      // to render live progress client-side can).
+      progressTemplate: "{done} of {total} uploaded",
       waiting: "Waiting…",
       uploading: "Uploading…",
       done: "Uploaded",

@@ -35,6 +35,10 @@ function isSettled(row: UploadRow): boolean {
   return row.status === "done" || row.status === "rejected";
 }
 
+function formatProgress(template: string, settledCount: number, totalCount: number): string {
+  return template.replace("{done}", String(settledCount)).replace("{total}", String(totalCount));
+}
+
 function preventDefault(event: DragEvent<HTMLDivElement>): void {
   event.preventDefault();
 }
@@ -116,7 +120,9 @@ export function UploadForm({ eventId, messages }: { eventId: string; messages: U
           <div className="flex items-center justify-between gap-4">
             <span className="text-heading text-lg">{messages.button}</span>
             {rows.length > 0 ? (
-              <span className="text-label text-text-muted">{messages.progress(settledCount, rows.length)}</span>
+              <span className="text-label text-text-muted">
+                {formatProgress(messages.progressTemplate, settledCount, rows.length)}
+              </span>
             ) : null}
           </div>
 

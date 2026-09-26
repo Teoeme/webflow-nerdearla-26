@@ -10,7 +10,7 @@ export const galleryEs: GalleryMessages = {
       button: "Subir fotos",
       dropZone: "Soltá las fotos acá, o",
       browseFiles: "elegí los archivos",
-      progress: (done, total) => `${done} de ${total} subidas`,
+      progressTemplate: "{done} de {total} subidas",
       waiting: "Esperando…",
       uploading: "Subiendo…",
       done: "Subida",
