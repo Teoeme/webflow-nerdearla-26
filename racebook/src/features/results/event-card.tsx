@@ -45,6 +45,7 @@ export function EventCard({
       <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-text-muted">
         <span>{formatEventDate(event.date, locale)}</span>
         <span>{event.location}</span>
+        <span>{messages.disciplines[event.discipline]}</span>
       </div>
 
       {result ? (
