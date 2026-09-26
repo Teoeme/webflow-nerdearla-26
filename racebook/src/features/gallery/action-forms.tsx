@@ -8,14 +8,14 @@ import type { TransferRequestOutcome } from "@/db/transfers";
 import type { Athlete } from "@/db/types";
 import { requestPhotoTag, requestPhotoTransfer } from "./actions";
 
-type TransferFormMessages = {
+export type TransferFormMessages = {
   fieldLabel: string;
   placeholder: string;
   button: string;
   outcomes: Record<Exclude<TransferRequestOutcome, "requested">, string>;
 };
 
-type TagFormMessages = {
+export type TagFormMessages = {
   fieldLabel: string;
   placeholder: string;
   button: string;

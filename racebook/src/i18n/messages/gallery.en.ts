@@ -6,6 +6,12 @@ export const galleryEn = {
     emptyState: "No photos yet — upload the first one from this event.",
     upload: {
       button: "Upload photos",
+      dropZone: "Drop photos here, or",
+      browseFiles: "browse files",
+      // A template, not a function: UploadForm is a client component, and a function
+      // can't cross the server/client boundary as a prop (only the messages it needs
+      // to render live progress client-side can).
+      progressTemplate: "{done} of {total} uploaded",
       waiting: "Waiting…",
       uploading: "Uploading…",
       done: "Uploaded",
@@ -14,6 +20,7 @@ export const galleryEn = {
         size: "Rejected — must be under 10 MB",
         missing: "Rejected — couldn't upload",
       },
+      close: "Close",
     },
     transfer: {
       fieldLabel: "Send to…",
@@ -58,6 +65,8 @@ export const galleryEn = {
     accept: "Accept",
     reject: "Reject",
     viewInEvent: (eventName: string) => `See it in ${eventName}`,
+    itemKindTransfer: "Transfer",
+    itemKindTag: "Tag",
   },
 };
 
