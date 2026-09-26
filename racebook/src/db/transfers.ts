@@ -127,29 +127,20 @@ export async function requestTransfer(input: {
   }
 }
 
-// Reads the pending transfer under the same guard the accept batch uses (still pending,
-// still addressed to this recipient), joined to its photo's current event — always the
-// sender's original event, since the photo hasn't moved yet while the transfer is
-// pending. Returns undefined when there is nothing left to accept, so the caller can
-// bail out before writing anything.
-async function findPendingTransferSourceEvent(
+// Pre-read guard the accept batch relies on: is this transfer still pending and still
+// addressed to this recipient? Only an existence check — the "new event" details, when
+// the recipient chose one, are already validated by the caller (see
+// features/gallery/accept-event-details.ts), not read from the transfer's source event.
+async function isTransferPending(
   database: D1Database,
   transferId: string,
   recipientId: string,
-): Promise<EventDetails | undefined> {
+): Promise<boolean> {
   const row = await database
-    .prepare(
-      `SELECT e.name AS event_name, e.date AS event_date, e.location AS event_location,
-              e.discipline AS event_discipline
-       FROM transfers t
-       JOIN photos p ON p.id = t.photo_id
-       JOIN events e ON e.id = p.event_id
-       WHERE t.id = ? AND t.status = 'pending' AND t.to_athlete_id = ?`,
-    )
+    .prepare(`SELECT 1 FROM transfers WHERE id = ? AND status = 'pending' AND to_athlete_id = ?`)
     .bind(transferId, recipientId)
-    .first<{ event_name: string; event_date: string; event_location: string; event_discipline: Discipline }>();
-  if (!row) return undefined;
-  return { name: row.event_name, date: row.event_date, location: row.event_location, discipline: row.event_discipline };
+    .first();
+  return row !== null;
 }
 
 // Returns the destination event's id once the transfer was actually accepted, or
@@ -162,11 +153,10 @@ export async function acceptTransfer(
   choice: DestinationChoice,
 ): Promise<string | undefined> {
   const database = await getDatabase();
-  const sourceEvent = await findPendingTransferSourceEvent(database, transferId, recipientId);
-  if (!sourceEvent) return undefined;
+  if (!(await isTransferPending(database, transferId, recipientId))) return undefined;
 
   const destination: Destination =
-    choice.kind === "existing" ? { kind: "existing", eventId: choice.eventId } : { kind: "new", details: sourceEvent };
+    choice.kind === "existing" ? { kind: "existing", eventId: choice.eventId } : { kind: "new", details: choice.details };
   const { statements: destinationStatements, eventId: destinationEventId } = resolveDestination(
     database,
     recipientId,

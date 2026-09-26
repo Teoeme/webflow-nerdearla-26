@@ -12,10 +12,12 @@ export type EventPhoto = Photo & { taggedByName: string | null };
 // into a brand-new one prefilled from the sender's event.
 export type Destination = { kind: "existing"; eventId: string } | { kind: "new"; details: EventDetails };
 
-// What the recipient picked in the destination <select>: an existing event's id, or the
-// "new event" sentinel. It carries no event details — those are never trusted from the
-// client; the accept functions derive them from the transfer/tag row itself.
-export type DestinationChoice = { kind: "existing"; eventId: string } | { kind: "new" };
+// What the recipient decided when accepting: an existing event's id, or a brand-new
+// event's details. The "new" details are prefilled from the sender's event but editable,
+// so the accept server action validates them (required fields, YYYY-MM-DD date,
+// discipline in the enum) before they ever reach this type — see
+// features/gallery/accept-event-details.ts.
+export type DestinationChoice = { kind: "existing"; eventId: string } | { kind: "new"; details: EventDetails };
 
 type PhotoRow = {
   id: string;

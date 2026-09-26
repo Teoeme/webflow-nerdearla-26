@@ -1,14 +1,14 @@
-import type { DestinationChoice } from "@/db/photos";
-
 // The inbox destination <select> uses this value for "a brand-new event", and one of
 // the recipient's own event ids for anything else.
 export const NEW_EVENT_DESTINATION_VALUE = "new";
 
-// Reads the destination <select>. It carries only the recipient's choice — an existing
-// event's id, or the "new event" sentinel — never the new event's details: those are
-// never trusted from the client, and are derived on the server from the transfer/tag
-// being accepted (see acceptTransfer/acceptTag).
-export function parseDestinationChoice(formData: FormData): DestinationChoice | null {
+// What the recipient picked in the destination <select>, before any validation: an
+// existing event's id, or the "new event" sentinel. For "new", the event details still
+// need reading and validating from the rest of the form — see accept-event-details.ts —
+// they are never trusted from the client as-is.
+export type DestinationSelection = { kind: "existing"; eventId: string } | { kind: "new" };
+
+export function parseDestinationSelection(formData: FormData): DestinationSelection | null {
   const destinationValue = formData.get("destination");
   if (typeof destinationValue !== "string" || !destinationValue) return null;
 
