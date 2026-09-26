@@ -1,14 +1,67 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { findEventName } from "@/db/photos";
+import { Field, Select } from "@/components/ui/field";
+import type { EventDetails } from "@/db/events";
+import { listEventsOwnedBy } from "@/db/events";
+import { listIncomingTags } from "@/db/photo-tags";
 import { listIncomingTransfers } from "@/db/transfers";
-import { acceptIncomingTransfer, rejectIncomingTransfer } from "@/features/gallery/actions";
+import type { Locale } from "@/i18n/locale";
+import type { RaceEvent } from "@/db/types";
+import {
+  acceptIncomingTag,
+  acceptIncomingTransfer,
+  rejectIncomingTag,
+  rejectIncomingTransfer,
+} from "@/features/gallery/actions";
+import { findMatchingEvent, NEW_EVENT_DESTINATION_VALUE } from "@/features/gallery/destination";
 import { getCurrentLocale } from "@/i18n/current-locale";
 import { getDictionary } from "@/i18n/dictionary";
+import type { Dictionary } from "@/i18n/dictionary";
 import { formatEventDate } from "@/i18n/formatters";
 import { getCurrentAthlete } from "@/session/current-athlete";
 
 const ISO_DATE_LENGTH = 10;
+
+type InboxMessages = Dictionary["gallery"]["inbox"];
+
+function DestinationFields({
+  idPrefix,
+  sourceEvent,
+  myEvents,
+  locale,
+  messages,
+}: {
+  idPrefix: string;
+  sourceEvent: EventDetails;
+  myEvents: RaceEvent[];
+  locale: Locale;
+  messages: InboxMessages;
+}) {
+  const matchingEvent = findMatchingEvent(myEvents, sourceEvent);
+
+  return (
+    <>
+      <input type="hidden" name="sourceEventName" value={sourceEvent.name} />
+      <input type="hidden" name="sourceEventDate" value={sourceEvent.date} />
+      <input type="hidden" name="sourceEventLocation" value={sourceEvent.location} />
+      <input type="hidden" name="sourceEventDiscipline" value={sourceEvent.discipline} />
+      <Field label={messages.destinationFieldLabel} htmlFor={`${idPrefix}-destination`}>
+        <Select
+          id={`${idPrefix}-destination`}
+          name="destination"
+          defaultValue={matchingEvent?.id ?? NEW_EVENT_DESTINATION_VALUE}
+        >
+          <option value={NEW_EVENT_DESTINATION_VALUE}>{messages.newEventOption(sourceEvent.name)}</option>
+          {myEvents.map((event) => (
+            <option key={event.id} value={event.id}>
+              {event.name} · {formatEventDate(event.date, locale)}
+            </option>
+          ))}
+        </Select>
+      </Field>
+    </>
+  );
+}
 
 export default async function InboxPage({
   searchParams,
@@ -25,10 +78,16 @@ export default async function InboxPage({
   const messages = dictionary.gallery.inbox;
   const photoMessages = dictionary.gallery.eventGallery;
 
-  const [incomingTransfers, acceptedEventName] = await Promise.all([
+  const [incomingTransfers, incomingTags, myEvents] = await Promise.all([
     listIncomingTransfers(currentAthlete.id),
-    acceptedEventId ? findEventName(acceptedEventId) : Promise.resolve(undefined),
+    listIncomingTags(currentAthlete.id),
+    listEventsOwnedBy(currentAthlete.id),
   ]);
+
+  const acceptedEventName = acceptedEventId
+    ? myEvents.find((event) => event.id === acceptedEventId)?.name
+    : undefined;
+  const isEmpty = incomingTransfers.length === 0 && incomingTags.length === 0;
 
   return (
     <main className="flex flex-col gap-6 p-6">
@@ -38,47 +97,106 @@ export default async function InboxPage({
           {messages.viewInEvent(acceptedEventName)}
         </Link>
       ) : null}
-      {incomingTransfers.length === 0 ? (
+
+      {isEmpty ? (
         <p className="text-text-muted">{messages.empty}</p>
       ) : (
-        <ul className="flex flex-col gap-4">
-          {incomingTransfers.map((transfer) => (
-            <li
-              key={transfer.id}
-              className="panel flex flex-col gap-3 p-4 sm:flex-row sm:items-center"
-            >
-              <img
-                src={`/api/photos/${transfer.photoId}`}
-                alt={photoMessages.photoAlt(transfer.eventName)}
-                loading="lazy"
-                className="aspect-square w-full max-w-40 rounded-sm object-cover"
-              />
-              <div className="flex flex-1 flex-col gap-2">
-                <p className="text-text">
-                  {messages.sentFrom(transfer.fromAthleteName, transfer.eventName)}
-                </p>
-                <p className="text-label text-text-muted">
-                  {formatEventDate(transfer.createdAt.slice(0, ISO_DATE_LENGTH), locale)}
-                </p>
-                <div className="flex gap-2">
-                  <form action={acceptIncomingTransfer}>
-                    <input type="hidden" name="transferId" value={transfer.id} />
-                    <input type="hidden" name="eventId" value={transfer.eventId} />
-                    <Button type="submit" variant="primary">
-                      {messages.accept}
-                    </Button>
-                  </form>
-                  <form action={rejectIncomingTransfer}>
-                    <input type="hidden" name="transferId" value={transfer.id} />
-                    <Button type="submit" variant="outline">
-                      {messages.reject}
-                    </Button>
-                  </form>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <>
+          {incomingTransfers.length > 0 ? (
+            <section className="flex flex-col gap-3">
+              <h2 className="text-heading text-xl">{messages.transfersHeading}</h2>
+              <ul className="flex flex-col gap-4">
+                {incomingTransfers.map((transfer) => (
+                  <li
+                    key={transfer.id}
+                    className="panel flex flex-col gap-3 p-4 sm:flex-row sm:items-center"
+                  >
+                    <img
+                      src={`/api/photos/${transfer.photoId}`}
+                      alt={photoMessages.photoAlt(transfer.sourceEvent.name)}
+                      loading="lazy"
+                      className="aspect-square w-full max-w-40 rounded-sm object-cover"
+                    />
+                    <div className="flex flex-1 flex-col gap-2">
+                      <p className="text-text">
+                        {messages.sentFrom(transfer.fromAthleteName, transfer.sourceEvent.name)}
+                      </p>
+                      <p className="text-label text-text-muted">
+                        {formatEventDate(transfer.createdAt.slice(0, ISO_DATE_LENGTH), locale)}
+                      </p>
+                      <div className="flex flex-wrap items-end gap-2">
+                        <form action={acceptIncomingTransfer} className="flex flex-col gap-2">
+                          <input type="hidden" name="transferId" value={transfer.id} />
+                          <DestinationFields
+                            idPrefix={`transfer-${transfer.id}`}
+                            sourceEvent={transfer.sourceEvent}
+                            myEvents={myEvents}
+                            locale={locale}
+                            messages={messages}
+                          />
+                          <Button type="submit" variant="primary">
+                            {messages.accept}
+                          </Button>
+                        </form>
+                        <form action={rejectIncomingTransfer}>
+                          <input type="hidden" name="transferId" value={transfer.id} />
+                          <Button type="submit" variant="outline">
+                            {messages.reject}
+                          </Button>
+                        </form>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {incomingTags.length > 0 ? (
+            <section className="flex flex-col gap-3">
+              <h2 className="text-heading text-xl">{messages.tagsHeading}</h2>
+              <ul className="flex flex-col gap-4">
+                {incomingTags.map((tag) => (
+                  <li key={tag.id} className="panel flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+                    <img
+                      src={`/api/photos/${tag.photoId}`}
+                      alt={photoMessages.photoAlt(tag.sourceEvent.name)}
+                      loading="lazy"
+                      className="aspect-square w-full max-w-40 rounded-sm object-cover"
+                    />
+                    <div className="flex flex-1 flex-col gap-2">
+                      <p className="text-text">{messages.taggedFrom(tag.taggedByName, tag.sourceEvent.name)}</p>
+                      <p className="text-label text-text-muted">
+                        {formatEventDate(tag.createdAt.slice(0, ISO_DATE_LENGTH), locale)}
+                      </p>
+                      <div className="flex flex-wrap items-end gap-2">
+                        <form action={acceptIncomingTag} className="flex flex-col gap-2">
+                          <input type="hidden" name="tagId" value={tag.id} />
+                          <DestinationFields
+                            idPrefix={`tag-${tag.id}`}
+                            sourceEvent={tag.sourceEvent}
+                            myEvents={myEvents}
+                            locale={locale}
+                            messages={messages}
+                          />
+                          <Button type="submit" variant="primary">
+                            {messages.accept}
+                          </Button>
+                        </form>
+                        <form action={rejectIncomingTag}>
+                          <input type="hidden" name="tagId" value={tag.id} />
+                          <Button type="submit" variant="outline">
+                            {messages.reject}
+                          </Button>
+                        </form>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+        </>
       )}
     </main>
   );
