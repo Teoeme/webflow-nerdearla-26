@@ -19,6 +19,7 @@ export const galleryEn = {
     },
     share: {
       action: "Share",
+      setCover: "Set as cover",
       modalTitle: "Share this photo",
       closeLabel: "Close",
       modeSend: { label: "Send it to them", description: "Moves the photo to their gallery" },

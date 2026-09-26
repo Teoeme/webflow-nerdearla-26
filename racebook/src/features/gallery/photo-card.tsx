@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { StatusPill } from "@/components/ui/status-pill";
 import { SharePanel } from "./share-panel";
+import { setEventCoverAction } from "@/features/results/cover-actions";
 import { PhotoThumbnailButton, type LightboxPhoto } from "./lightbox";
 
 // The overlay (pills + Share button) shows at reduced opacity by default and full
@@ -43,7 +44,17 @@ export function PhotoCard({ photo }: { photo: LightboxPhoto }) {
       </div>
 
       {ownerActions ? (
-        <div className={`absolute top-1 right-1 z-10 ${overlayVisibilityClassName}`}>
+        <div className={`absolute top-1 right-1 z-10 flex gap-1 ${overlayVisibilityClassName}`}>
+          <form action={setEventCoverAction}>
+            <input type="hidden" name="eventId" value={ownerActions.eventId} />
+            <input type="hidden" name="photoId" value={photo.id} />
+            <button
+              type="submit"
+              className="flex h-7 items-center rounded-sm border border-line bg-background/70 px-2 text-label text-text hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            >
+              {ownerActions.messages.setCover}
+            </button>
+          </form>
           <button
             type="button"
             onClick={openShare}

@@ -21,6 +21,7 @@ export const galleryEs: GalleryMessages = {
     },
     share: {
       action: "Compartir",
+      setCover: "Usar como portada",
       modalTitle: "Compartir esta foto",
       closeLabel: "Cerrar",
       modeSend: { label: "Mandásela", description: "Mueve la foto a su galería" },

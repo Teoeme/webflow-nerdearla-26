@@ -51,8 +51,8 @@ function toShareCandidates(candidates: Athlete[], share: ShareDictionary): Share
 }
 
 function toShareMessages(share: ShareDictionary): ShareMessages {
-  const { action, modalTitle, closeLabel, modeSend, modeTag, choosePrompt, pendingPill, addedPill, outcomes } = share;
-  return { action, modalTitle, closeLabel, modeSend, modeTag, choosePrompt, pendingPill, addedPill, outcomes };
+  const { action, setCover, modalTitle, closeLabel, modeSend, modeTag, choosePrompt, pendingPill, addedPill, outcomes } = share;
+  return { action, setCover, modalTitle, closeLabel, modeSend, modeTag, choosePrompt, pendingPill, addedPill, outcomes };
 }
 
 export async function EventGallery({ eventId }: { eventId: string }): Promise<JSX.Element> {
