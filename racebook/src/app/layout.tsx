@@ -3,19 +3,28 @@ import Link from "next/link";
 import "./globals.css";
 import { archivo } from "./fonts";
 import { listAthletes } from "../db/athletes";
+import { listIncomingTransfers } from "../db/transfers";
+import { listIncomingTags } from "../db/photo-tags";
 import { getCurrentAthlete } from "../session/current-athlete";
 import { getCurrentLocale } from "../i18n/current-locale";
 import { getDictionary } from "../i18n/dictionary";
 import { AthleteSwitcher } from "../components/session/athlete-switcher";
 import { LanguageSwitcher } from "../components/session/language-switcher";
+import { Nav } from "../components/session/nav";
 import { Wordmark } from "../components/ui/wordmark";
-
-const NAV_LINK_CLASS_NAME = "text-label text-text opacity-60 transition-opacity hover:opacity-100";
 
 export const metadata: Metadata = {
   title: "Racebook",
   description: "The athlete's book of races.",
 };
+
+async function countPendingInboxItems(athleteId: string): Promise<number> {
+  const [incomingTransfers, incomingTags] = await Promise.all([
+    listIncomingTransfers(athleteId),
+    listIncomingTags(athleteId),
+  ]);
+  return incomingTransfers.length + incomingTags.length;
+}
 
 export default async function RootLayout({
   children,
@@ -28,37 +37,36 @@ export default async function RootLayout({
     getCurrentLocale(),
     getDictionary(),
   ]);
+  const pendingInboxCount = await countPendingInboxItems(currentAthlete.id);
+
+  const navItems = [
+    { href: "/", label: dictionary.common.nav.medalBoard, pendingCount: 0 },
+    { href: "/inbox", label: dictionary.common.nav.inbox, pendingCount: pendingInboxCount },
+  ];
 
   return (
     <html lang={currentLocale} className={archivo.variable}>
-      <body className="min-h-screen">
-        <header className="border-b border-line">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-8 gap-y-3 px-6 py-4">
-            <Link href="/" className="text-2xl">
+      <body className="min-h-screen lg:flex">
+        <header className="flex flex-col gap-6 border-b border-line px-6 py-4 lg:h-screen lg:w-60 lg:flex-none lg:justify-between lg:border-r lg:border-b-0 lg:py-8">
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-4 lg:flex-col lg:items-start lg:gap-6">
+            <Link href="/" className="text-lg">
               <Wordmark />
             </Link>
-            <nav className="flex gap-6">
-              <Link href="/" className={NAV_LINK_CLASS_NAME}>
-                {dictionary.common.nav.medalBoard}
-              </Link>
-              <Link href="/inbox" className={NAV_LINK_CLASS_NAME}>
-                {dictionary.common.nav.inbox}
-              </Link>
-            </nav>
-            <div className="ml-auto flex items-center gap-6">
-              <AthleteSwitcher
-                athletes={athletes}
-                currentAthleteId={currentAthlete.id}
-                label={dictionary.common.viewAsLabel}
-              />
-              <LanguageSwitcher
-                currentLocale={currentLocale}
-                label={dictionary.common.languageSwitcherLabel}
-              />
-            </div>
+            <Nav items={navItems} />
+          </div>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 lg:flex-col lg:items-stretch lg:gap-3">
+            <AthleteSwitcher
+              athletes={athletes}
+              currentAthleteId={currentAthlete.id}
+              label={dictionary.common.viewAsLabel}
+            />
+            <LanguageSwitcher
+              currentLocale={currentLocale}
+              label={dictionary.common.languageSwitcherLabel}
+            />
           </div>
         </header>
-        <div className="mx-auto max-w-5xl">{children}</div>
+        <div className="mx-auto w-full max-w-5xl lg:h-screen lg:overflow-y-auto">{children}</div>
       </body>
     </html>
   );
