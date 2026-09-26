@@ -10,13 +10,14 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status-pill";
 import { joinClassNames } from "@/components/ui/class-names";
 import type { Athlete } from "@/db/types";
-import { TagForm, TransferForm, type TagFormMessages, type TransferFormMessages } from "./action-forms";
+import { TagModal, TransferModal, type TagFormMessages, type TransferFormMessages } from "./action-forms";
 import type { PhotoPill } from "./photo-status";
 
-// Present only on a photo I own: the same Select-based forms as the grid card, reused
+// Present only on a photo I own: the same Modal-based actions as the grid card, reused
 // here so accepting a transfer or a tag from inside the lightbox goes through the exact
 // same server actions.
 export type LightboxOwnerActions = {
@@ -174,22 +175,7 @@ export function LightboxProvider({
                     </div>
                   ) : null}
                   {currentPhoto.ownerActions ? (
-                    <div className="flex flex-wrap gap-3">
-                      {currentPhoto.ownerActions.showTransferForm ? (
-                        <TransferForm
-                          photoId={currentPhoto.id}
-                          eventId={currentPhoto.ownerActions.eventId}
-                          candidates={currentPhoto.ownerActions.candidates}
-                          messages={currentPhoto.ownerActions.transferMessages}
-                        />
-                      ) : null}
-                      <TagForm
-                        photoId={currentPhoto.id}
-                        eventId={currentPhoto.ownerActions.eventId}
-                        candidates={currentPhoto.ownerActions.candidates}
-                        messages={currentPhoto.ownerActions.tagMessages}
-                      />
-                    </div>
+                    <PhotoOwnerActions photoId={currentPhoto.id} ownerActions={currentPhoto.ownerActions} />
                   ) : null}
                 </>
               )}
@@ -219,6 +205,60 @@ export function LightboxProvider({
   );
 }
 
+// The Transfer/Tag buttons in the lightbox footer open the same Modal as the grid
+// card's menu — a fresh `key` per open discards any outcome message left over from a
+// previous open, without disturbing the currently open instance while it closes.
+function PhotoOwnerActions({ photoId, ownerActions }: { photoId: string; ownerActions: LightboxOwnerActions }) {
+  const [isTransferOpen, setTransferOpen] = useState(false);
+  const [transferInstance, setTransferInstance] = useState(0);
+  const [isTagOpen, setTagOpen] = useState(false);
+  const [tagInstance, setTagInstance] = useState(0);
+
+  function openTransfer(): void {
+    setTransferInstance((instance) => instance + 1);
+    setTransferOpen(true);
+  }
+
+  function openTag(): void {
+    setTagInstance((instance) => instance + 1);
+    setTagOpen(true);
+  }
+
+  return (
+    <div className="flex flex-wrap gap-3">
+      <Button type="button" variant="outline" onClick={openTag}>
+        {ownerActions.tagMessages.menuLabel}
+      </Button>
+      {ownerActions.showTransferForm ? (
+        <Button type="button" variant="primary" onClick={openTransfer}>
+          {ownerActions.transferMessages.menuLabel}
+        </Button>
+      ) : null}
+
+      {ownerActions.showTransferForm ? (
+        <TransferModal
+          key={transferInstance}
+          open={isTransferOpen}
+          onOpenChange={setTransferOpen}
+          photoId={photoId}
+          eventId={ownerActions.eventId}
+          candidates={ownerActions.candidates}
+          messages={ownerActions.transferMessages}
+        />
+      ) : null}
+      <TagModal
+        key={tagInstance}
+        open={isTagOpen}
+        onOpenChange={setTagOpen}
+        photoId={photoId}
+        eventId={ownerActions.eventId}
+        candidates={ownerActions.candidates}
+        messages={ownerActions.tagMessages}
+      />
+    </div>
+  );
+}
+
 export function PhotoThumbnailButton({
   photoId,
   src,
@@ -230,12 +270,16 @@ export function PhotoThumbnailButton({
 }) {
   const { open } = useLightbox();
   return (
-    <button type="button" onClick={() => open(photoId)} className="block w-full">
+    <button
+      type="button"
+      onClick={() => open(photoId)}
+      className="absolute inset-0 block h-full w-full cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+    >
       <img
         src={src}
         alt={alt}
         loading="lazy"
-        className="aspect-square w-full rounded-sm object-cover"
+        className="h-full w-full object-cover transition-transform duration-200 ease-out group-hover:scale-105 group-focus-within:scale-105"
       />
     </button>
   );

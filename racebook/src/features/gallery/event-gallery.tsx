@@ -84,17 +84,8 @@ export async function EventGallery({ eventId }: { eventId: string }): Promise<JS
       ) : (
         <LightboxProvider photos={lightboxPhotos} labels={messages.lightbox}>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {photos.map((photo) => (
-              <PhotoCard
-                key={photo.id}
-                photo={photo}
-                eventId={eventId}
-                eventName={displayEventName}
-                pendingRecipient={pendingRecipientByPhotoId.get(photo.id)}
-                tags={tagsByPhotoId.get(photo.id) ?? []}
-                transferCandidates={transferCandidates}
-                messages={messages}
-              />
+            {lightboxPhotos.map((photo) => (
+              <PhotoCard key={photo.id} photo={photo} actionsLabel={messages.actionsLabel} />
             ))}
           </div>
         </LightboxProvider>
