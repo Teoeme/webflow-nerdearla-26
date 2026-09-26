@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import type { RaceResult } from "@/db/types";
@@ -11,9 +11,6 @@ import {
   toResultFormValues,
   type ScreenshotCaptureLabels,
 } from "@/features/ai-capture/screenshot-capture";
-
-// How long a field stays visibly highlighted after a screenshot capture fills it.
-const CAPTURE_HIGHLIGHT_DURATION_MS = 3000;
 
 // Opens the result form in a modal on the event page itself. Set
 // `initiallyOpen` from the page's `?logResult=1` search param so it opens by
@@ -38,19 +35,17 @@ export function ResultModal({
   const [open, setOpen] = useState(initiallyOpen);
   const [prefilledValues, setPrefilledValues] = useState<ReturnType<typeof toResultFormValues>>();
   const [highlightedFields, setHighlightedFields] = useState<CapturedFieldName[]>();
+  const [isReadingCapture, setIsReadingCapture] = useState(false);
   const [captureCount, setCaptureCount] = useState(0);
   const triggerLabel = existingResult
     ? messages.eventDetail.myResult.editCta
     : messages.eventDetail.myResult.logCta;
 
-  // The highlight is tied to the moment of capture, not to `prefilledValues` itself:
-  // `prefilledValues` intentionally survives a close/reopen within the same session
-  // (see ResultForm), but the highlight must not reappear on a plain reopen.
-  useEffect(() => {
-    if (!highlightedFields) return;
-    const timeoutId = setTimeout(() => setHighlightedFields(undefined), CAPTURE_HIGHLIGHT_DURATION_MS);
-    return () => clearTimeout(timeoutId);
-  }, [highlightedFields]);
+  // A field stays marked as AI-filled until the athlete either edits it or saves
+  // the form (`closeModal`, below) — never on a timer.
+  function markFieldEdited(field: CapturedFieldName): void {
+    setHighlightedFields((current) => current?.filter((highlighted) => highlighted !== field));
+  }
 
   function closeModal(): void {
     setOpen(false);
@@ -73,6 +68,7 @@ export function ResultModal({
       <div className="mb-4">
         <ScreenshotCapture
           labels={captureLabels}
+          onReadingChange={setIsReadingCapture}
           onCaptured={(metrics) => {
             const values = toResultFormValues(metrics);
             setPrefilledValues(values);
@@ -89,6 +85,9 @@ export function ResultModal({
         messages={messages}
         prefilledValues={prefilledValues}
         highlightedFields={highlightedFields}
+        isCapturing={isReadingCapture}
+        aiBadgeLabel={captureLabels.filledByAi}
+        onFieldEdited={markFieldEdited}
         onSaved={closeModal}
       />
     </Modal>

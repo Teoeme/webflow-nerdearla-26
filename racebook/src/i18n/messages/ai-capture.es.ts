@@ -3,8 +3,9 @@ import type { AiCaptureMessages } from "./ai-capture.en";
 export const aiCaptureEs: AiCaptureMessages = {
   screenshotCapture: {
     button: "Completá desde una captura",
-    reading: "Leyendo tu captura…",
+    reading: "Leyendo tu captura con IA…",
     filledTemplate: "Completamos {count} de 4 campos. Revisalos antes de guardar.",
+    filledByAi: "Completado con IA",
     errors: {
       type: "Usá una captura en JPEG, PNG o WEBP.",
       size: "Esa captura pesa demasiado — usá una de menos de 5 MB.",

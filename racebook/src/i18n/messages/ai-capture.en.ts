@@ -1,12 +1,15 @@
 export const aiCaptureEn = {
   screenshotCapture: {
     button: "Fill from a screenshot",
-    reading: "Reading your screenshot…",
+    reading: "Reading your screenshot with AI…",
     // A template, not a function: ScreenshotCapture is a client component, and a function
     // can't cross the server/client boundary as a prop (only the messages it needs to
     // render live progress client-side can). "{count}" is replaced with the number of
     // fields the capture actually filled.
     filledTemplate: "Filled {count} of 4 fields. Check them before saving.",
+    // Shown as a small badge next to a field's label once a screenshot filled it, until
+    // the athlete edits that field or saves the form.
+    filledByAi: "Filled by AI",
     errors: {
       type: "Use a JPEG, PNG or WEBP screenshot.",
       size: "That screenshot is too large — use one under 5 MB.",
