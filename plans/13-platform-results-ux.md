@@ -1,6 +1,6 @@
 # 13 · platform + results · Navigation, modal forms and card motion
 
-**Status:** todo
+**Status:** done
 
 ## Goal
 
