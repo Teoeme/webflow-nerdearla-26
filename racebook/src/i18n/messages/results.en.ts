@@ -33,7 +33,7 @@ export const resultsEn = {
     },
   },
   resultForm: {
-    title: (eventName: string) => `Your result for ${eventName}`,
+    title: "Log your result",
     fields: {
       place: "Place",
       time: "Time",

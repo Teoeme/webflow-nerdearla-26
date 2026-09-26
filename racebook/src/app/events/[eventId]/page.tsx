@@ -36,20 +36,22 @@ export default async function EventDetailPage({
         </p>
       </div>
 
-      <section className="panel flex flex-col gap-4 p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 className="text-heading text-xl">{messages.eventDetail.myResult.title}</h2>
-          <ButtonLink href={`/events/${event.id}/result`}>
-            {myResult ? messages.eventDetail.myResult.editCta : messages.eventDetail.myResult.logCta}
-          </ButtonLink>
-        </div>
+      <section className="panel flex flex-wrap items-center gap-6 p-5">
+        <h2 className="sr-only">{messages.eventDetail.myResult.title}</h2>
         {myResultStats.length > 0 ? (
-          <div className="flex flex-wrap gap-6">
+          <div className="flex flex-1 flex-wrap items-center divide-x divide-line">
             {myResultStats.map((stat) => (
-              <Stat key={stat.label} label={stat.label} value={stat.value} />
+              <div key={stat.label} className="px-6 first:pl-0 last:pr-0">
+                <Stat label={stat.label} value={stat.value} />
+              </div>
             ))}
           </div>
-        ) : null}
+        ) : (
+          <p className="flex-1 text-text-muted">{messages.medalBoard.card.noResultYet}</p>
+        )}
+        <ButtonLink href={`/events/${event.id}/result`} variant="outline">
+          {myResult ? messages.eventDetail.myResult.editCta : messages.eventDetail.myResult.logCta}
+        </ButtonLink>
       </section>
 
       <EventGallery eventId={event.id} />

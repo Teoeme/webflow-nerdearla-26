@@ -35,7 +35,7 @@ export const resultsEs: ResultsMessages = {
     },
   },
   resultForm: {
-    title: (eventName: string) => `Tu resultado en ${eventName}`,
+    title: "Cargá tu resultado",
     fields: {
       place: "Puesto",
       time: "Tiempo",
