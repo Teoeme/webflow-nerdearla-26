@@ -51,7 +51,7 @@ export const galleryEs: GalleryMessages = {
   },
   inbox: {
     title: "Bandeja",
-    empty: "Aún no tenés fotos pendientes. Pediles a tus amigos o compañeros de carrera que te compartan tu foto o sus fotos juntos 🫶🏼",
+    empty: "Aún no tenés fotos pendientes. Pediles a tus amigos o compañeros de carrera que te compartan tu foto o sus fotos juntos, y que esos recuerdos queden guardados junto con la experiencia vivida 🫶🏼",
     transfersHeading: "Fotos que te mandaron",
     tagsHeading: "Te etiquetaron",
     sentFrom: (fromAthleteName, eventName) => `${fromAthleteName} te mandó una foto de ${eventName}`,

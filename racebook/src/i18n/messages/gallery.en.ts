@@ -49,7 +49,7 @@ export const galleryEn = {
   },
   inbox: {
     title: "Inbox",
-    empty: "No photos waiting for you yet. Ask your friends or race mates to share your photo, or the ones you took together 🫶🏼",
+    empty: "No photos waiting for you yet. Ask your friends or race mates to share your photo, or the ones you took together, so those memories stay with the race you lived 🫶🏼",
     transfersHeading: "Photos sent to you",
     tagsHeading: "You were tagged",
     sentFrom: (fromAthleteName: string, eventName: string) =>
