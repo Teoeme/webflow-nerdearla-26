@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
+import { joinClassNames } from "@/components/ui/class-names";
 import { MedalBadge } from "@/components/ui/medal-badge";
 import type { Medal, RaceResult } from "@/db/types";
 import { formatDuration } from "@/i18n/formatters";
@@ -12,9 +13,16 @@ import { FieldError } from "./field-error";
 import type { toResultFormValues } from "@/features/ai-capture/screenshot-capture";
 
 type ResultFormPrefill = ReturnType<typeof toResultFormValues>;
+export type CapturedFieldName = keyof ResultFormPrefill;
 
 const INITIAL_STATE: ResultFormState = { errors: {} };
 const MEDAL_OPTIONS: Medal[] = ["bronze", "silver", "gold"];
+
+// Classes for a field that was just filled by a screenshot capture: an accent border and
+// a faint accent tint. `transition-colors` is `motion-safe` only, so someone with reduced
+// motion sees the highlight removed instantly instead of fading out (see docs/brand.md).
+const CAPTURE_HIGHLIGHT_CLASS_NAME = "border-accent bg-accent/10";
+const CAPTURE_HIGHLIGHT_TRANSITION_CLASS_NAME = "motion-safe:transition-colors motion-safe:duration-700";
 
 // A swatch (real radio + label, keyboard accessible) styled with the same
 // border/focus rules as the rest of the form's fields.
@@ -32,6 +40,7 @@ export function ResultForm({
   messages,
   onSaved,
   prefilledValues,
+  highlightedFields,
 }: {
   eventId: string;
   existingResult: RaceResult | undefined;
@@ -39,11 +48,18 @@ export function ResultForm({
   onSaved?: () => void;
   // Values read from a screenshot; they win over the saved result until the athlete saves.
   prefilledValues?: ResultFormPrefill;
+  // Fields that were just filled by a screenshot capture, briefly highlighted.
+  highlightedFields?: CapturedFieldName[];
 }) {
   const saveResultForEvent = saveResultAction.bind(null, eventId);
   const [state, formAction, isPending] = useActionState(saveResultForEvent, INITIAL_STATE);
   const fields = messages.resultForm.fields;
   const errors = state.errors;
+
+  function captureHighlightClassName(field: CapturedFieldName): string {
+    const isHighlighted = highlightedFields?.includes(field) ?? false;
+    return joinClassNames(CAPTURE_HIGHLIGHT_TRANSITION_CLASS_NAME, isHighlighted && CAPTURE_HIGHLIGHT_CLASS_NAME);
+  }
 
   // The action only returns (it never redirects, the form lives in a modal
   // on the event page): tell the caller once a submission finishes clean.
@@ -66,7 +82,13 @@ export function ResultForm({
         </Field>
 
         <Field label={fields.time} htmlFor="time" hint={messages.resultForm.hints.time}>
-          <Input id="time" name="time" type="text" defaultValue={prefilledValues?.time ?? timeDefaultValue(existingResult)} />
+          <Input
+            id="time"
+            name="time"
+            type="text"
+            defaultValue={prefilledValues?.time ?? timeDefaultValue(existingResult)}
+            className={captureHighlightClassName("time")}
+          />
           {errors.time ? <FieldError message={messages.errors[errors.time]} /> : null}
         </Field>
 
@@ -78,6 +100,7 @@ export function ResultForm({
             step="0.01"
             min={0}
             defaultValue={prefilledValues?.distance ?? existingResult?.distanceKm ?? ""}
+            className={captureHighlightClassName("distance")}
           />
           {errors.distance ? <FieldError message={messages.errors[errors.distance]} /> : null}
         </Field>
@@ -89,12 +112,19 @@ export function ResultForm({
             type="number"
             min={1}
             defaultValue={prefilledValues?.avgHeartRate ?? existingResult?.avgHeartRate ?? ""}
+            className={captureHighlightClassName("avgHeartRate")}
           />
           {errors.avgHeartRate ? <FieldError message={messages.errors[errors.avgHeartRate]} /> : null}
         </Field>
 
         <Field label={fields.elevation} htmlFor="elevation">
-          <Input id="elevation" name="elevation" type="number" defaultValue={prefilledValues?.elevation ?? existingResult?.elevationM ?? ""} />
+          <Input
+            id="elevation"
+            name="elevation"
+            type="number"
+            defaultValue={prefilledValues?.elevation ?? existingResult?.elevationM ?? ""}
+            className={captureHighlightClassName("elevation")}
+          />
           {errors.elevation ? <FieldError message={messages.errors[errors.elevation]} /> : null}
         </Field>
 
