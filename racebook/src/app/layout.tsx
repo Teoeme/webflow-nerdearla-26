@@ -12,6 +12,7 @@ import { AthleteSwitcher } from "../components/session/athlete-switcher";
 import { LanguageSwitcher } from "../components/session/language-switcher";
 import { Nav } from "../components/session/nav";
 import { Wordmark } from "../components/ui/wordmark";
+import { OnboardingLauncher } from "../features/onboarding/onboarding-launcher";
 
 export const metadata: Metadata = {
   title: "Racebook",
@@ -64,6 +65,7 @@ export default async function RootLayout({
               currentLocale={currentLocale}
               label={dictionary.common.languageSwitcherLabel}
             />
+            <OnboardingLauncher messages={dictionary.onboarding} />
           </div>
         </header>
         <div className="mx-auto w-full max-w-5xl lg:h-screen lg:overflow-y-auto">{children}</div>

@@ -12,17 +12,21 @@ import type { GalleryMessages } from "./messages/gallery.en";
 import { aiCaptureEn } from "./messages/ai-capture.en";
 import { aiCaptureEs } from "./messages/ai-capture.es";
 import type { AiCaptureMessages } from "./messages/ai-capture.en";
+import { onboardingEn } from "./messages/onboarding.en";
+import { onboardingEs } from "./messages/onboarding.es";
+import type { OnboardingMessages } from "./messages/onboarding.en";
 
 export type Dictionary = {
   common: CommonMessages;
   results: ResultsMessages;
   gallery: GalleryMessages;
   aiCapture: AiCaptureMessages;
+  onboarding: OnboardingMessages;
 };
 
 const dictionaries: Record<Locale, Dictionary> = {
-  en: { common: commonEn, results: resultsEn, gallery: galleryEn, aiCapture: aiCaptureEn },
-  es: { common: commonEs, results: resultsEs, gallery: galleryEs, aiCapture: aiCaptureEs },
+  en: { common: commonEn, results: resultsEn, gallery: galleryEn, aiCapture: aiCaptureEn, onboarding: onboardingEn },
+  es: { common: commonEs, results: resultsEs, gallery: galleryEs, aiCapture: aiCaptureEs, onboarding: onboardingEs },
 };
 
 export async function getDictionary(): Promise<Dictionary> {
