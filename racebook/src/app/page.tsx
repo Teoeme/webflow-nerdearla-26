@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Stat } from "@/components/ui/stat";
 import { listEventPhotos, type EventPhoto } from "@/db/photos";
 import { listEventEntries, type EventEntry } from "@/db/results";
 import type { Medal } from "@/db/types";
+import { AnimatedStat } from "@/features/results/animated-stat";
 import { EventCard } from "@/features/results/event-card";
 import { LogRaceModal } from "@/features/results/log-race-modal";
 import { getCurrentAthlete } from "@/session/current-athlete";
@@ -41,15 +41,15 @@ export default async function MedalBoardPage() {
   const racesLogged = countLoggedRaces(entries);
 
   const summaryStats = [
-    { label: messages.medalBoard.stats.racesLogged, value: String(racesLogged) },
-    { label: messages.medalBoard.stats.medals, value: String(totalMedals), emphasis: true },
-    { label: messages.medalBoard.stats.gold, value: String(goldCount) },
-    { label: messages.medalBoard.stats.silver, value: String(silverCount) },
-    { label: messages.medalBoard.stats.bronze, value: String(bronzeCount) },
+    { label: messages.medalBoard.stats.racesLogged, value: racesLogged },
+    { label: messages.medalBoard.stats.medals, value: totalMedals, emphasis: true },
+    { label: messages.medalBoard.stats.gold, value: goldCount },
+    { label: messages.medalBoard.stats.silver, value: silverCount },
+    { label: messages.medalBoard.stats.bronze, value: bronzeCount },
   ];
 
   return (
-    <main className="flex flex-col gap-8 p-6">
+    <main className="motion-safe:page-enter flex flex-col gap-8 p-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-display text-3xl">{dictionary.common.nav.medalBoard}</h1>
@@ -61,7 +61,7 @@ export default async function MedalBoardPage() {
       <div className="flex flex-wrap gap-3">
         {summaryStats.map((stat) => (
           <div key={stat.label} className="panel min-w-[7rem] flex-1 p-4">
-            <Stat label={stat.label} value={stat.value} emphasis={stat.emphasis} />
+            <AnimatedStat label={stat.label} target={stat.value} emphasis={stat.emphasis} />
           </div>
         ))}
       </div>
@@ -81,8 +81,8 @@ export default async function MedalBoardPage() {
               under prefers-reduced-motion via Tailwind's motion-safe:. */}
           <style>{`
             @keyframes card-fade-up {
-              from { opacity: 0; transform: translateY(6px); }
-              to { opacity: 1; transform: translateY(0); }
+              from { opacity: 0; transform: translateY(10px) scale(0.96); filter: blur(6px); }
+              to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
             }
           `}</style>
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
