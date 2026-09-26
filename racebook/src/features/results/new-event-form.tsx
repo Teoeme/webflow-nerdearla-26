@@ -41,16 +41,15 @@ export function NewEventForm({ messages }: { messages: ClientResultsMessages }) 
         </Field>
 
         <Field label={fields.discipline} htmlFor="discipline">
-          <Select id="discipline" name="discipline" defaultValue="">
-            <option value="" disabled>
-              {fields.discipline}
-            </option>
-            {DISCIPLINE_OPTIONS.map((discipline) => (
-              <option key={discipline} value={discipline}>
-                {messages.disciplines[discipline]}
-              </option>
-            ))}
-          </Select>
+          <Select
+            id="discipline"
+            name="discipline"
+            placeholder={fields.discipline}
+            options={DISCIPLINE_OPTIONS.map((discipline) => ({
+              value: discipline,
+              label: messages.disciplines[discipline],
+            }))}
+          />
           {errors.discipline ? <FieldError message={messages.errors[errors.discipline]} /> : null}
         </Field>
       </div>

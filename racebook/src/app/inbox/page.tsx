@@ -94,16 +94,22 @@ function DestinationFields({
   locale: Locale;
   messages: InboxMessages;
 }) {
+  const options = [
+    { value: NEW_EVENT_DESTINATION_VALUE, label: messages.newEventOption(sourceEvent.name) },
+    ...myEvents.map((event) => ({
+      value: event.id,
+      label: `${event.name} · ${formatEventDate(event.date, locale)}`,
+    })),
+  ];
+
   return (
     <Field label={messages.destinationFieldLabel} htmlFor={`${idPrefix}-destination`}>
-      <Select id={`${idPrefix}-destination`} name="destination" defaultValue={NEW_EVENT_DESTINATION_VALUE}>
-        <option value={NEW_EVENT_DESTINATION_VALUE}>{messages.newEventOption(sourceEvent.name)}</option>
-        {myEvents.map((event) => (
-          <option key={event.id} value={event.id}>
-            {event.name} · {formatEventDate(event.date, locale)}
-          </option>
-        ))}
-      </Select>
+      <Select
+        id={`${idPrefix}-destination`}
+        name="destination"
+        defaultValue={NEW_EVENT_DESTINATION_VALUE}
+        options={options}
+      />
     </Field>
   );
 }

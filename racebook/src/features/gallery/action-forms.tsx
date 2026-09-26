@@ -46,16 +46,13 @@ export function TransferForm({
       <input type="hidden" name="photoId" value={photoId} />
       <input type="hidden" name="eventId" value={eventId} />
       <Field label={messages.fieldLabel} htmlFor={`transfer-${photoId}`}>
-        <Select id={`transfer-${photoId}`} name="toAthleteId" required defaultValue="">
-          <option value="" disabled>
-            {messages.placeholder}
-          </option>
-          {candidates.map((athlete) => (
-            <option key={athlete.id} value={athlete.id}>
-              {athlete.name}
-            </option>
-          ))}
-        </Select>
+        <Select
+          id={`transfer-${photoId}`}
+          name="toAthleteId"
+          required
+          placeholder={messages.placeholder}
+          options={candidates.map((athlete) => ({ value: athlete.id, label: athlete.name }))}
+        />
       </Field>
       <Button type="submit" variant="outline" disabled={isPending}>
         {messages.button}
@@ -84,16 +81,13 @@ export function TagForm({
       <input type="hidden" name="photoId" value={photoId} />
       <input type="hidden" name="eventId" value={eventId} />
       <Field label={messages.fieldLabel} htmlFor={`tag-${photoId}`}>
-        <Select id={`tag-${photoId}`} name="athleteId" required defaultValue="">
-          <option value="" disabled>
-            {messages.placeholder}
-          </option>
-          {candidates.map((athlete) => (
-            <option key={athlete.id} value={athlete.id}>
-              {athlete.name}
-            </option>
-          ))}
-        </Select>
+        <Select
+          id={`tag-${photoId}`}
+          name="athleteId"
+          required
+          placeholder={messages.placeholder}
+          options={candidates.map((athlete) => ({ value: athlete.id, label: athlete.name }))}
+        />
       </Field>
       <Button type="submit" variant="outline" disabled={isPending}>
         {messages.button}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import type { Athlete } from "../../db/types";
 import { switchAthlete } from "../../session/actions";
 import { Select } from "../ui/field";
@@ -11,22 +12,20 @@ type AthleteSwitcherProps = {
 };
 
 export function AthleteSwitcher({ athletes, currentAthleteId, label }: AthleteSwitcherProps) {
+  const formRef = useRef<HTMLFormElement>(null);
+  const options = athletes.map((athlete) => ({ value: athlete.id, label: athlete.name }));
+
   return (
-    <form action={switchAthlete}>
+    <form ref={formRef} action={switchAthlete}>
       <label className="flex items-center gap-3">
         <span className="text-label text-text-muted">{label}</span>
         <Select
           key={currentAthleteId}
           name="athleteId"
+          options={options}
           defaultValue={currentAthleteId}
-          onChange={(event) => event.currentTarget.form?.requestSubmit()}
-        >
-          {athletes.map((athlete) => (
-            <option key={athlete.id} value={athlete.id}>
-              {athlete.name}
-            </option>
-          ))}
-        </Select>
+          onValueChange={() => formRef.current?.requestSubmit()}
+        />
       </label>
     </form>
   );
