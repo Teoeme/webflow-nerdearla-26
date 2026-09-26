@@ -8,6 +8,9 @@ export const galleryEs: GalleryMessages = {
     emptyState: "Todavía no tenés fotos — subí la primera de este evento.",
     upload: {
       button: "Subir fotos",
+      dropZone: "Soltá las fotos acá, o",
+      browseFiles: "elegí los archivos",
+      progress: (done, total) => `${done} de ${total} subidas`,
       waiting: "Esperando…",
       uploading: "Subiendo…",
       done: "Subida",
@@ -16,6 +19,7 @@ export const galleryEs: GalleryMessages = {
         size: "Rechazada — tiene que pesar menos de 10 MB",
         missing: "Rechazada — no se pudo subir",
       },
+      close: "Cerrar",
     },
     transfer: {
       fieldLabel: "Enviar a…",
@@ -58,5 +62,7 @@ export const galleryEs: GalleryMessages = {
     accept: "Aceptá la foto",
     reject: "Rechazar",
     viewInEvent: (eventName) => `Verla en ${eventName}`,
+    itemKindTransfer: "Transferencia",
+    itemKindTag: "Etiqueta",
   },
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ChangeEvent } from "react";
+import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import type { GalleryMessages } from "@/i18n/messages/gallery.en";
@@ -31,14 +31,28 @@ function withRowStatus(
   return rows.map((row) => (row.key === key ? { ...row, status, reason } : row));
 }
 
-// A batch uploader: every file is its own request, uploaded one at a time (a request
-// never carries more than one photo, so the Workers body limit never matters), each
-// shown as its own row.
+function isSettled(row: UploadRow): boolean {
+  return row.status === "done" || row.status === "rejected";
+}
+
+function preventDefault(event: DragEvent<HTMLDivElement>): void {
+  event.preventDefault();
+}
+
+// A batch uploader, shown as an overlay panel: a drop zone (drag and drop, plus a file
+// picker), an overall progress bar and one row per file. Every file is still its own
+// request, uploaded one at a time (a request never carries more than one photo, so the
+// Workers body limit never matters).
 export function UploadForm({ eventId, messages }: { eventId: string; messages: UploadMessages }) {
   const router = useRouter();
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<UploadRow[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+
+  function openPanel(): void {
+    dialogRef.current?.showModal();
+  }
 
   async function uploadFiles(files: File[]): Promise<void> {
     setIsUploading(true);
@@ -78,30 +92,87 @@ export function UploadForm({ eventId, messages }: { eventId: string; messages: U
     void uploadFiles(files);
   }
 
+  function handleDrop(event: DragEvent<HTMLDivElement>): void {
+    event.preventDefault();
+    const files = Array.from(event.dataTransfer.files);
+    if (files.length === 0) return;
+    void uploadFiles(files);
+  }
+
+  const settledCount = rows.filter(isSettled).length;
+  const overallProgress = rows.length === 0 ? 0 : Math.round((settledCount / rows.length) * 100);
+
   return (
-    <div className="flex flex-col gap-2">
-      <input
-        ref={inputRef}
-        type="file"
-        accept={ACCEPTED_PHOTO_TYPES_ATTRIBUTE}
-        multiple
-        className="hidden"
-        onChange={handleFilesSelected}
-        disabled={isUploading}
-      />
-      <Button type="button" onClick={() => inputRef.current?.click()} disabled={isUploading}>
+    <>
+      <Button type="button" onClick={openPanel}>
         {messages.button}
       </Button>
-      {rows.length > 0 ? (
-        <ul className="flex flex-col gap-1">
-          {rows.map((row) => (
-            <li key={row.key} className="text-label text-text-muted flex items-center justify-between gap-2">
-              <span>{row.fileName}</span>
-              <span>{statusLabel(row, messages)}</span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </div>
+      <dialog
+        ref={dialogRef}
+        onClose={() => setRows([])}
+        className="panel m-auto w-[min(92vw,32rem)] max-w-none bg-background p-0 backdrop:bg-black/80"
+      >
+        <div className="flex flex-col gap-4 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-heading text-lg">{messages.button}</span>
+            {rows.length > 0 ? (
+              <span className="text-label text-text-muted">{messages.progress(settledCount, rows.length)}</span>
+            ) : null}
+          </div>
+
+          {rows.length > 0 ? (
+            <div className="h-1 overflow-hidden rounded-sm bg-line">
+              <div className="h-full bg-accent transition-[width]" style={{ width: `${overallProgress}%` }} />
+            </div>
+          ) : null}
+
+          <div
+            onDrop={handleDrop}
+            onDragOver={preventDefault}
+            className="rounded-sm border border-dashed border-line p-4 text-center text-label text-text-muted"
+          >
+            {messages.dropZone}{" "}
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className="text-accent underline-offset-2 hover:underline"
+            >
+              {messages.browseFiles}
+            </button>
+          </div>
+          <input
+            ref={inputRef}
+            type="file"
+            accept={ACCEPTED_PHOTO_TYPES_ATTRIBUTE}
+            multiple
+            className="hidden"
+            onChange={handleFilesSelected}
+            disabled={isUploading}
+          />
+
+          {rows.length > 0 ? (
+            <ul className="flex flex-col gap-1">
+              {rows.map((row) => (
+                <li
+                  key={row.key}
+                  className="flex items-center justify-between gap-2 border-t border-line pt-1 text-label"
+                >
+                  <span className="text-text">{row.fileName}</span>
+                  <span className="text-text-muted">{statusLabel(row, messages)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          {rows.length > 0 && !isUploading ? (
+            <div className="flex justify-end">
+              <Button type="button" variant="outline" onClick={() => dialogRef.current?.close()}>
+                {messages.close}
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      </dialog>
+    </>
   );
 }
