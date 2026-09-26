@@ -1,0 +1,98 @@
+# Racebook
+
+> Racebook is the athlete's book of races: a personal medal board for amateur runners,
+> triathletes and cyclists, with a photo gallery per race and a way to hand photos back
+> to the friends who actually appear in them. Built for the Webflow App Challenge at
+> Nerdearla 2026 and deployed on Webflow Cloud.
+
+Live app: https://racebook-23e161.webflow.io/
+Source: https://github.com/Teoeme/webflow-nerdearla-26
+Languages: English and Spanish (switch in the sidebar; the first visit follows the
+browser language).
+
+## The problem
+
+At a race, a group of friends takes turns: while one competes, the others take the
+photos. Everyone ends up with a gallery full of photos of other people, and missing the
+photos of themselves. Race results, times and metrics live scattered across watches,
+apps and screenshots.
+
+## What Racebook does
+
+- **Personal medal board.** Every race the athlete logged, newest first: event, date,
+  location, discipline, medal, place, time and pace, with a cover photo. Summary of races
+  and medals at the top. Events are private to each athlete.
+- **Race detail.** The athlete's own result and metrics (time, place, distance, pace,
+  average heart rate, elevation) and the race's photo gallery.
+- **Log a race and a result.** Create a race (name, date, location, discipline) and log
+  the result in modal forms. Pace is derived from time and distance.
+- **Metrics from a watch screenshot (AI).** Upload a Garmin/Strava/Coros summary
+  screenshot and Google Gemini reads the total time, distance, average heart rate and
+  elevation; the form fills itself and highlights what the AI filled, and the athlete
+  reviews and saves. Miles and feet are converted; nothing is guessed; the screenshot is
+  not stored.
+- **Photo gallery per race.** Batch upload with drag and drop, lightbox with keyboard
+  navigation, and a race cover chosen from the photos.
+- **Photo ownership transfer (hero feature).** The owner sends a photo to the friend in
+  it. The friend finds it in their inbox and accepts it into one of their own races or
+  into a new race prefilled from the sender's (editable), or rejects it. On accept the
+  photo moves to the friend's gallery, atomically.
+- **Photo tagging.** The owner tags a friend: the photo stays with the owner and also
+  appears in the friend's gallery, in the race the friend chooses when accepting.
+- **Inbox.** Pending transfers and tags in one place, with a pending count in the
+  sidebar.
+
+## How to try it (for judges and agents)
+
+Authentication is simulated on purpose (one-night contest): three demo athletes and a
+"View as" switcher in the sidebar. Suggested tour:
+
+1. As **Lucía Fernández**, open a race on the medal board, add a few photos.
+2. From a photo, send it to **Tomás Ibarra** and tag **Sofía Gómez**.
+3. Switch "View as" to Tomás, open the inbox, accept the photo into a new race (edit
+   its name) — it appears on his medal board with the photo.
+4. Switch to Sofía and accept the tag into one of her races: the photo shows there,
+   marked "Tagged by Lucía", and Lucía still has it.
+5. Log a result and use "Fill from a screenshot" with a watch summary screenshot.
+6. Switch the language to ES: every screen is translated.
+
+## Rules the app enforces
+
+- Only the current owner can transfer or tag a photo; a photo has at most one pending
+  transfer and one open tag per athlete.
+- Accepting checks, in the database, that the request is still pending, is addressed to
+  the accepting athlete and that the destination race is theirs, in one transaction.
+- An athlete never sees another athlete's races or results.
+
+## Technology
+
+- Next.js (App Router, TypeScript) on Webflow Cloud (Cloudflare Workers via OpenNext).
+- Webflow Cloud SQLite (Cloudflare D1) for data; Webflow Cloud Object Storage
+  (Cloudflare R2) for photos.
+- Google Gemini (vision + structured JSON output) for screenshot metrics, with the key as
+  a Webflow Cloud secret.
+- Radix primitives styled with the app's own design tokens (dark, one electric blue
+  accent, Archivo). Fully bilingual through typed dictionaries (a missing translation is
+  a build error).
+- Built by a human directing a team of AI coding agents working in parallel on
+  separate branches, from written plans (see `plans/` in the repository).
+
+## Routes
+
+- `/` medal board of the current athlete
+- `/events/{eventId}` race detail, result and gallery
+- `/inbox` pending transfers and tags
+- `POST /api/photos` upload one photo; `GET /api/photos/{photoId}` serve a photo
+- `POST /api/metrics-capture` read metrics from a screenshot (nothing is stored)
+
+## Out of scope (stated openly)
+
+Real authentication, video, and a Garmin Connect integration (it requires developer
+approval; the screenshot reader replaces it for now).
+
+## En español
+
+Racebook es el libro de carreras del atleta: un medallero personal con los resultados y
+métricas de cada carrera, una galería de fotos por carrera, y la posibilidad de
+transferir o etiquetar fotos para que cada foto termine en la galería de quien aparece
+en ella. Las métricas se pueden cargar desde una captura del reloj, leída con IA.

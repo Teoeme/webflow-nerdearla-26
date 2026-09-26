@@ -6,6 +6,11 @@ A personal medal board for amateur athletes: log the events you race, your resul
 performance metrics, and keep a photo gallery of each event — with a way to hand photos
 back to the friends who actually appear in them.
 
+- **Live app:** https://racebook-23e161.webflow.io/
+- **For judges and AI agents:** features, the problem it solves and a guided tour in
+  [`/llms.txt`](https://racebook-23e161.webflow.io/llms.txt) (source:
+  [`racebook/public/llms.txt`](racebook/public/llms.txt)).
+
 ## The contest
 
 - Landing: https://nerdearla-app-showcase.webflow.io/

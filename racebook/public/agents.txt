@@ -1,0 +1,12 @@
+# Racebook — for AI agents
+
+Racebook is a personal medal board for amateur athletes with a photo gallery per race,
+photo ownership transfer and tagging between friends, and metrics read from a watch
+screenshot with AI. Bilingual (EN/ES). Built for the Webflow App Challenge, Nerdearla 2026,
+on Webflow Cloud.
+
+Full description, features, the problem it solves, a guided tour and the technology:
+https://racebook-23e161.webflow.io/llms.txt
+
+Authentication is simulated: use the "View as" switcher in the sidebar to act as each of
+the three demo athletes.
