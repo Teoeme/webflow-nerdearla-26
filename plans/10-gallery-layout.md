@@ -1,6 +1,6 @@
 # 10 · gallery · Lightbox, upload panel and inbox split view
 
-**Status:** todo
+**Status:** done
 
 ## Goal
 
