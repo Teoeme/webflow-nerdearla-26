@@ -1,6 +1,6 @@
 # 11 · ai-capture · Metrics from a watch screenshot (Gemini)
 
-**Status:** todo
+**Status:** done
 
 ## Goal
 

@@ -6,6 +6,9 @@ declare namespace Cloudflare {
 		PHOTOS: R2Bucket;
 		DB: D1Database;
 		ASSETS: Fetcher;
+		// Secret, not a binding: set in `racebook/.dev.vars` locally and as a Webflow
+		// Cloud secret environment variable in production. Not present in wrangler.json.
+		GEMINI_API_KEY: string;
 	}
 }
 interface CloudflareEnv extends Cloudflare.Env {}
