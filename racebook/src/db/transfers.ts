@@ -1,6 +1,6 @@
 import { getDatabase } from "./connection";
 import type { EventDetails } from "./events";
-import { resolveDestination, type Destination } from "./photos";
+import { resolveDestination, type Destination, type DestinationChoice } from "./photos";
 import type { Discipline, Transfer } from "./types";
 
 export type IncomingTransfer = Transfer & {
@@ -127,12 +127,46 @@ export async function requestTransfer(input: {
   }
 }
 
+// Reads the pending transfer under the same guard the accept batch uses (still pending,
+// still addressed to this recipient), joined to its photo's current event — always the
+// sender's original event, since the photo hasn't moved yet while the transfer is
+// pending. Returns undefined when there is nothing left to accept, so the caller can
+// bail out before writing anything.
+async function findPendingTransferSourceEvent(
+  database: D1Database,
+  transferId: string,
+  recipientId: string,
+): Promise<EventDetails | undefined> {
+  const row = await database
+    .prepare(
+      `SELECT e.name AS event_name, e.date AS event_date, e.location AS event_location,
+              e.discipline AS event_discipline
+       FROM transfers t
+       JOIN photos p ON p.id = t.photo_id
+       JOIN events e ON e.id = p.event_id
+       WHERE t.id = ? AND t.status = 'pending' AND t.to_athlete_id = ?`,
+    )
+    .bind(transferId, recipientId)
+    .first<{ event_name: string; event_date: string; event_location: string; event_discipline: Discipline }>();
+  if (!row) return undefined;
+  return { name: row.event_name, date: row.event_date, location: row.event_location, discipline: row.event_discipline };
+}
+
+// Returns the destination event's id once the transfer was actually accepted, or
+// undefined when there was nothing pending to accept (already resolved, wrong
+// recipient, or a double submit) — in that case nothing is written, so a "new event"
+// choice never leaves behind an orphan event.
 export async function acceptTransfer(
   transferId: string,
   recipientId: string,
-  destination: Destination,
-): Promise<boolean> {
+  choice: DestinationChoice,
+): Promise<string | undefined> {
   const database = await getDatabase();
+  const sourceEvent = await findPendingTransferSourceEvent(database, transferId, recipientId);
+  if (!sourceEvent) return undefined;
+
+  const destination: Destination =
+    choice.kind === "existing" ? { kind: "existing", eventId: choice.eventId } : { kind: "new", details: sourceEvent };
   const { statements: destinationStatements, eventId: destinationEventId } = resolveDestination(
     database,
     recipientId,
@@ -165,7 +199,8 @@ export async function acceptTransfer(
     markTransferAccepted,
   ]);
 
-  return batchResults[batchResults.length - 1].meta.changes > 0;
+  const wasAccepted = batchResults[batchResults.length - 1].meta.changes > 0;
+  return wasAccepted ? destinationEventId : undefined;
 }
 
 export async function rejectTransfer(transferId: string, recipientId: string): Promise<boolean> {

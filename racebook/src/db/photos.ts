@@ -12,6 +12,11 @@ export type EventPhoto = Photo & { taggedByName: string | null };
 // into a brand-new one prefilled from the sender's event.
 export type Destination = { kind: "existing"; eventId: string } | { kind: "new"; details: EventDetails };
 
+// What the recipient picked in the destination <select>: an existing event's id, or the
+// "new event" sentinel. It carries no event details — those are never trusted from the
+// client; the accept functions derive them from the transfer/tag row itself.
+export type DestinationChoice = { kind: "existing"; eventId: string } | { kind: "new" };
+
 type PhotoRow = {
   id: string;
   event_id: string;

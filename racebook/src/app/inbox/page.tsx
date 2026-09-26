@@ -13,7 +13,7 @@ import {
   rejectIncomingTag,
   rejectIncomingTransfer,
 } from "@/features/gallery/actions";
-import { findMatchingEvent, NEW_EVENT_DESTINATION_VALUE } from "@/features/gallery/destination";
+import { NEW_EVENT_DESTINATION_VALUE } from "@/features/gallery/destination";
 import { getCurrentLocale } from "@/i18n/current-locale";
 import { getDictionary } from "@/i18n/dictionary";
 import type { Dictionary } from "@/i18n/dictionary";
@@ -24,6 +24,10 @@ const ISO_DATE_LENGTH = 10;
 
 type InboxMessages = Dictionary["gallery"]["inbox"];
 
+// The destination <select> defaults to "new event": guessing a matching existing event
+// by name/date/location picked the wrong one whenever the recipient had a duplicate, so
+// the recipient always chooses explicitly instead. The accept action derives the new
+// event's details from the transfer/tag row itself — the client never sends them.
 function DestinationFields({
   idPrefix,
   sourceEvent,
@@ -37,29 +41,17 @@ function DestinationFields({
   locale: Locale;
   messages: InboxMessages;
 }) {
-  const matchingEvent = findMatchingEvent(myEvents, sourceEvent);
-
   return (
-    <>
-      <input type="hidden" name="sourceEventName" value={sourceEvent.name} />
-      <input type="hidden" name="sourceEventDate" value={sourceEvent.date} />
-      <input type="hidden" name="sourceEventLocation" value={sourceEvent.location} />
-      <input type="hidden" name="sourceEventDiscipline" value={sourceEvent.discipline} />
-      <Field label={messages.destinationFieldLabel} htmlFor={`${idPrefix}-destination`}>
-        <Select
-          id={`${idPrefix}-destination`}
-          name="destination"
-          defaultValue={matchingEvent?.id ?? NEW_EVENT_DESTINATION_VALUE}
-        >
-          <option value={NEW_EVENT_DESTINATION_VALUE}>{messages.newEventOption(sourceEvent.name)}</option>
-          {myEvents.map((event) => (
-            <option key={event.id} value={event.id}>
-              {event.name} · {formatEventDate(event.date, locale)}
-            </option>
-          ))}
-        </Select>
-      </Field>
-    </>
+    <Field label={messages.destinationFieldLabel} htmlFor={`${idPrefix}-destination`}>
+      <Select id={`${idPrefix}-destination`} name="destination" defaultValue={NEW_EVENT_DESTINATION_VALUE}>
+        <option value={NEW_EVENT_DESTINATION_VALUE}>{messages.newEventOption(sourceEvent.name)}</option>
+        {myEvents.map((event) => (
+          <option key={event.id} value={event.id}>
+            {event.name} · {formatEventDate(event.date, locale)}
+          </option>
+        ))}
+      </Select>
+    </Field>
   );
 }
 

@@ -1,6 +1,6 @@
 import { getDatabase } from "./connection";
 import type { EventDetails } from "./events";
-import { resolveDestination, type Destination } from "./photos";
+import { resolveDestination, type Destination, type DestinationChoice } from "./photos";
 import type { PhotoTag } from "./types";
 
 export type TagRequestOutcome = "tagged" | "not_owner" | "already_tagged" | "same_athlete";
@@ -136,13 +136,46 @@ export async function listOpenTagsOnEvent(ownerId: string, eventId: string): Pro
   return results.map(toPhotoTagWithName);
 }
 
+// Reads the pending tag under the same guard the accept batch uses (still pending,
+// still on this athlete), joined to its photo's current event — always the tagger's
+// original event, since the photo's own event_id never changes on a tag (only the
+// tag row gets one, once accepted). Returns undefined when there is nothing left to
+// accept, so the caller can bail out before writing anything.
+async function findPendingTagSourceEvent(
+  database: D1Database,
+  tagId: string,
+  athleteId: string,
+): Promise<EventDetails | undefined> {
+  const row = await database
+    .prepare(
+      `SELECT e.name AS event_name, e.date AS event_date, e.location AS event_location,
+              e.discipline AS event_discipline
+       FROM photo_tags pt
+       JOIN photos p ON p.id = pt.photo_id
+       JOIN events e ON e.id = p.event_id
+       WHERE pt.id = ? AND pt.status = 'pending' AND pt.athlete_id = ?`,
+    )
+    .bind(tagId, athleteId)
+    .first<{ event_name: string; event_date: string; event_location: string; event_discipline: EventDetails["discipline"] }>();
+  if (!row) return undefined;
+  return { name: row.event_name, date: row.event_date, location: row.event_location, discipline: row.event_discipline };
+}
+
 // Sets status 'accepted' and event_id = destination; the photo itself is untouched.
+// Returns the destination event's id once the tag was actually accepted, or undefined
+// when there was nothing pending to accept — in that case nothing is written, so a
+// "new event" choice never leaves behind an orphan event.
 export async function acceptTag(
   tagId: string,
   athleteId: string,
-  destination: Destination,
-): Promise<boolean> {
+  choice: DestinationChoice,
+): Promise<string | undefined> {
   const database = await getDatabase();
+  const sourceEvent = await findPendingTagSourceEvent(database, tagId, athleteId);
+  if (!sourceEvent) return undefined;
+
+  const destination: Destination =
+    choice.kind === "existing" ? { kind: "existing", eventId: choice.eventId } : { kind: "new", details: sourceEvent };
   const { statements: destinationStatements, eventId: destinationEventId } = resolveDestination(
     database,
     athleteId,
@@ -160,7 +193,8 @@ export async function acceptTag(
 
   const batchResults = await database.batch([...destinationStatements, markTagAccepted]);
 
-  return batchResults[batchResults.length - 1].meta.changes > 0;
+  const wasAccepted = batchResults[batchResults.length - 1].meta.changes > 0;
+  return wasAccepted ? destinationEventId : undefined;
 }
 
 export async function rejectTag(tagId: string, athleteId: string): Promise<boolean> {
