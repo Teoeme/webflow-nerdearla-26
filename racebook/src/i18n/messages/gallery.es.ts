@@ -21,10 +21,14 @@ export const galleryEs: GalleryMessages = {
       },
       close: "Cerrar",
     },
+    actionsLabel: "Acciones de la foto",
     transfer: {
       fieldLabel: "Enviar a…",
       placeholder: "Elegí a un amigo",
-      button: "Transferir",
+      button: "Mandar foto",
+      menuLabel: "Transferir…",
+      modalTitle: "Mandar esta foto",
+      closeLabel: "Cerrar",
       outcomes: {
         not_owner: "Ya no sos el dueño de esta foto.",
         already_pending: "Esta foto ya tiene una transferencia pendiente.",
@@ -35,6 +39,9 @@ export const galleryEs: GalleryMessages = {
       fieldLabel: "Etiquetar a un amigo…",
       placeholder: "Elegí a un amigo",
       button: "Etiquetar",
+      menuLabel: "Etiquetar…",
+      modalTitle: "Etiquetar a un amigo",
+      closeLabel: "Cerrar",
       outcomes: {
         not_owner: "Ya no sos el dueño de esta foto.",
         already_tagged: "Ya etiquetaste a ese amigo en esta foto.",
@@ -59,6 +66,25 @@ export const galleryEs: GalleryMessages = {
     taggedFrom: (taggedByName, eventName) => `${taggedByName} te etiquetó en una foto de ${eventName}`,
     destinationFieldLabel: "Agregar a…",
     newEventOption: (sourceEventName) => `Evento nuevo: ${sourceEventName}`,
+    newEventHint:
+      "\"Evento nuevo\" prellena nombre, fecha y lugar del evento de quien te la mandó, y podés editarlos antes de crearlo.",
+    newEventFields: {
+      name: "Nombre",
+      date: "Fecha",
+      location: "Lugar",
+      discipline: "Disciplina",
+    },
+    newEventErrors: {
+      required: "Este campo es obligatorio.",
+      invalidDate: "Ingresá una fecha como AAAA-MM-DD.",
+    },
+    disciplines: {
+      road_running: "Running en ruta",
+      trail_running: "Trail running",
+      triathlon: "Triatlón",
+      cycling: "Ciclismo",
+      swimming: "Natación",
+    },
     accept: "Aceptá la foto",
     reject: "Rechazar",
     viewInEvent: (eventName) => `Verla en ${eventName}`,

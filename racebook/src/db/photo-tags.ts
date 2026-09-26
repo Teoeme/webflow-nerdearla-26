@@ -136,29 +136,16 @@ export async function listOpenTagsOnEvent(ownerId: string, eventId: string): Pro
   return results.map(toPhotoTagWithName);
 }
 
-// Reads the pending tag under the same guard the accept batch uses (still pending,
-// still on this athlete), joined to its photo's current event — always the tagger's
-// original event, since the photo's own event_id never changes on a tag (only the
-// tag row gets one, once accepted). Returns undefined when there is nothing left to
-// accept, so the caller can bail out before writing anything.
-async function findPendingTagSourceEvent(
-  database: D1Database,
-  tagId: string,
-  athleteId: string,
-): Promise<EventDetails | undefined> {
+// Pre-read guard the accept batch relies on: is this tag still pending and still on
+// this athlete? Only an existence check — the "new event" details, when the athlete
+// chose one, are already validated by the caller (see
+// features/gallery/accept-event-details.ts), not read from the tag's source event.
+async function isTagPending(database: D1Database, tagId: string, athleteId: string): Promise<boolean> {
   const row = await database
-    .prepare(
-      `SELECT e.name AS event_name, e.date AS event_date, e.location AS event_location,
-              e.discipline AS event_discipline
-       FROM photo_tags pt
-       JOIN photos p ON p.id = pt.photo_id
-       JOIN events e ON e.id = p.event_id
-       WHERE pt.id = ? AND pt.status = 'pending' AND pt.athlete_id = ?`,
-    )
+    .prepare(`SELECT 1 FROM photo_tags WHERE id = ? AND status = 'pending' AND athlete_id = ?`)
     .bind(tagId, athleteId)
-    .first<{ event_name: string; event_date: string; event_location: string; event_discipline: EventDetails["discipline"] }>();
-  if (!row) return undefined;
-  return { name: row.event_name, date: row.event_date, location: row.event_location, discipline: row.event_discipline };
+    .first();
+  return row !== null;
 }
 
 // Sets status 'accepted' and event_id = destination; the photo itself is untouched.
@@ -171,11 +158,10 @@ export async function acceptTag(
   choice: DestinationChoice,
 ): Promise<string | undefined> {
   const database = await getDatabase();
-  const sourceEvent = await findPendingTagSourceEvent(database, tagId, athleteId);
-  if (!sourceEvent) return undefined;
+  if (!(await isTagPending(database, tagId, athleteId))) return undefined;
 
   const destination: Destination =
-    choice.kind === "existing" ? { kind: "existing", eventId: choice.eventId } : { kind: "new", details: sourceEvent };
+    choice.kind === "existing" ? { kind: "existing", eventId: choice.eventId } : { kind: "new", details: choice.details };
   const { statements: destinationStatements, eventId: destinationEventId } = resolveDestination(
     database,
     athleteId,

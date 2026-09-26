@@ -1,20 +1,18 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { joinClassNames } from "@/components/ui/class-names";
-import { Field, Select } from "@/components/ui/field";
 import type { EventDetails } from "@/db/events";
 import { listEventsOwnedBy } from "@/db/events";
 import { listIncomingTags, type IncomingTag } from "@/db/photo-tags";
 import { listIncomingTransfers, type IncomingTransfer } from "@/db/transfers";
 import type { Locale } from "@/i18n/locale";
 import type { RaceEvent } from "@/db/types";
+import { AcceptForm, type AcceptFormMessages } from "@/features/gallery/accept-form";
 import {
   acceptIncomingTag,
   acceptIncomingTransfer,
   rejectIncomingTag,
   rejectIncomingTransfer,
 } from "@/features/gallery/actions";
-import { NEW_EVENT_DESTINATION_VALUE } from "@/features/gallery/destination";
 import { getCurrentLocale } from "@/i18n/current-locale";
 import { getDictionary } from "@/i18n/dictionary";
 import type { Dictionary } from "@/i18n/dictionary";
@@ -77,43 +75,6 @@ function itemHeading(item: InboxItem, messages: InboxMessages): string {
     : messages.taggedFrom(item.fromName, item.sourceEvent.name);
 }
 
-// The destination <select> defaults to "new event": guessing a matching existing event
-// by name/date/location picked the wrong one whenever the recipient had a duplicate, so
-// the recipient always chooses explicitly instead. The accept action derives the new
-// event's details from the transfer/tag row itself — the client never sends them.
-function DestinationFields({
-  idPrefix,
-  sourceEvent,
-  myEvents,
-  locale,
-  messages,
-}: {
-  idPrefix: string;
-  sourceEvent: EventDetails;
-  myEvents: RaceEvent[];
-  locale: Locale;
-  messages: InboxMessages;
-}) {
-  const options = [
-    { value: NEW_EVENT_DESTINATION_VALUE, label: messages.newEventOption(sourceEvent.name) },
-    ...myEvents.map((event) => ({
-      value: event.id,
-      label: `${event.name} · ${formatEventDate(event.date, locale)}`,
-    })),
-  ];
-
-  return (
-    <Field label={messages.destinationFieldLabel} htmlFor={`${idPrefix}-destination`}>
-      <Select
-        id={`${idPrefix}-destination`}
-        name="destination"
-        defaultValue={NEW_EVENT_DESTINATION_VALUE}
-        options={options}
-      />
-    </Field>
-  );
-}
-
 function DecisionPanel({
   item,
   myEvents,
@@ -130,6 +91,19 @@ function DecisionPanel({
   const idFieldName = item.kind === "transfer" ? "transferId" : "tagId";
   const acceptAction = item.kind === "transfer" ? acceptIncomingTransfer : acceptIncomingTag;
   const rejectAction = item.kind === "transfer" ? rejectIncomingTransfer : rejectIncomingTag;
+
+  // Only plain strings and records cross into AcceptForm (a client component): the
+  // dictionary's `newEventOption` is a function, resolved to a string here first.
+  const acceptFormMessages: AcceptFormMessages = {
+    destinationFieldLabel: messages.destinationFieldLabel,
+    newEventOptionLabel: messages.newEventOption(item.sourceEvent.name),
+    newEventHint: messages.newEventHint,
+    newEventFields: messages.newEventFields,
+    newEventErrors: messages.newEventErrors,
+    disciplines: messages.disciplines,
+    accept: messages.accept,
+    reject: messages.reject,
+  };
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-6">
@@ -153,27 +127,16 @@ function DecisionPanel({
 
       <hr className="border-line" />
 
-      <div className="flex flex-wrap items-end gap-2">
-        <form action={acceptAction} className="flex flex-col gap-2">
-          <input type="hidden" name={idFieldName} value={item.id} />
-          <DestinationFields
-            idPrefix={item.key}
-            sourceEvent={item.sourceEvent}
-            myEvents={myEvents}
-            locale={locale}
-            messages={messages}
-          />
-          <Button type="submit" variant="primary">
-            {messages.accept}
-          </Button>
-        </form>
-        <form action={rejectAction}>
-          <input type="hidden" name={idFieldName} value={item.id} />
-          <Button type="submit" variant="outline">
-            {messages.reject}
-          </Button>
-        </form>
-      </div>
+      <AcceptForm
+        idFieldName={idFieldName}
+        itemId={item.id}
+        sourceEvent={item.sourceEvent}
+        myEvents={myEvents}
+        locale={locale}
+        acceptAction={acceptAction}
+        rejectAction={rejectAction}
+        messages={acceptFormMessages}
+      />
     </div>
   );
 }
@@ -228,8 +191,10 @@ export default async function InboxPage({
                   <Link
                     href={`/inbox?item=${item.key}`}
                     className={joinClassNames(
-                      "flex items-center gap-3 border-l-2 p-3",
-                      isSelected ? "border-l-accent bg-accent/5" : "border-l-transparent",
+                      "flex items-center gap-3 border-l-2 p-3 transition-colors",
+                      isSelected
+                        ? "border-l-accent bg-accent/5"
+                        : "border-l-transparent hover:bg-white/[0.03] active:bg-white/[0.06]",
                     )}
                   >
                     <img

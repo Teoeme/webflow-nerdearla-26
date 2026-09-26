@@ -1,6 +1,6 @@
 # 14 · gallery · Photo actions, hover states and accept with event details
 
-**Status:** todo
+**Status:** done
 
 ## Goal
 
