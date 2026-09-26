@@ -52,6 +52,13 @@
 
 :root {
   color-scheme: dark;
+
+  /* Named motion tokens (durations/easings), so every animation below reads its
+     timing from one place instead of repeating literals. */
+  --motion-duration-fast: 200ms;
+  --motion-duration-base: 260ms;
+  --motion-duration-slow: 600ms;
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 body {
@@ -87,6 +94,66 @@ body {
 /* Times, pace, distance: digits keep their width. */
 @utility text-metric {
   font-variant-numeric: tabular-nums;
+}
+
+/* A `panel` that reacts to hover/focus: it lifts slightly and its corner light
+   intensifies and spreads, instead of the plain white ring other interactive
+   states use elsewhere. Apply alongside `panel` (e.g. `panel panel-interactive`),
+   normally behind `motion-safe:` so it does nothing under prefers-reduced-motion. */
+@utility panel-interactive {
+  transition: transform var(--motion-duration-fast) var(--motion-ease-out);
+
+  &:hover,
+  &:focus-within {
+    transform: translateY(-3px);
+  }
+
+  &:hover::before,
+  &:focus-within::before {
+    background:
+      linear-gradient(270deg, var(--color-glow), transparent) right bottom / min(65%, 16rem) 1.5px no-repeat,
+      linear-gradient(0deg, var(--color-glow), transparent) right bottom / 1.5px min(65%, 9rem) no-repeat;
+    transition: background var(--motion-duration-base) var(--motion-ease-out);
+  }
+
+  &:hover::after,
+  &:focus-within::after {
+    background: radial-gradient(70% 70% at 100% 100%, rgb(61 123 255 / 0.16), transparent);
+    transition: background var(--motion-duration-base) var(--motion-ease-out);
+  }
+}
+
+/* A field being auto-filled from a screenshot: a faint accent sweep while Gemini
+   reads the image. Always paired with `motion-safe:` at the call site; the
+   static accent border alone is the reduced-motion fallback. */
+@keyframes field-shimmer-sweep {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+@utility field-shimmer {
+  background-image: linear-gradient(100deg, var(--color-field) 40%, rgb(61 123 255 / 0.22) 50%, var(--color-field) 60%);
+  background-size: 250% 100%;
+  animation: field-shimmer-sweep 1.1s var(--motion-ease-out) infinite;
+}
+
+/* A field just auto-filled from a screenshot: the accent tint pulses once, then
+   settles into the steady highlighted state applied alongside it. */
+@keyframes capture-pulse {
+  from { background-color: rgb(61 123 255 / 0.35); }
+  to { background-color: rgb(61 123 255 / 0.1); }
+}
+
+/* Page content on first mount (including client-side navigation, which remounts
+   the page's `<main>`): a soft fade + slide, off under prefers-reduced-motion
+   through the `motion-safe:` variant at the call site. */
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@utility page-enter {
+  animation: page-fade-in var(--motion-duration-base) var(--motion-ease-out) backwards;
 }
 
 /* Radix overlays and panels (Select, Modal, Menu): short open/close transitions. */

@@ -23,7 +23,7 @@ export default async function ResultFormPage({
   const existingResult = await findResult(athlete.id, event.id);
 
   return (
-    <main className="flex justify-center p-6">
+    <main className="motion-safe:page-enter flex justify-center p-6">
       <div className="panel flex w-full max-w-2xl flex-col gap-6 p-8">
         <div>
           <h1 className="text-display text-2xl">{messages.resultForm.title}</h1>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { joinClassNames } from "@/components/ui/class-names";
@@ -10,6 +10,7 @@ import { formatDuration } from "@/i18n/formatters";
 import { saveResultAction, type ResultFormState } from "./actions";
 import type { ClientResultsMessages } from "./client-messages";
 import { FieldError } from "./field-error";
+import { AiFilledBadge } from "@/features/ai-capture/ai-filled-badge";
 import type { toResultFormValues } from "@/features/ai-capture/screenshot-capture";
 
 type ResultFormPrefill = ReturnType<typeof toResultFormValues>;
@@ -19,10 +20,14 @@ const INITIAL_STATE: ResultFormState = { errors: {} };
 const MEDAL_OPTIONS: Medal[] = ["bronze", "silver", "gold"];
 
 // Classes for a field that was just filled by a screenshot capture: an accent border and
-// a faint accent tint. `transition-colors` is `motion-safe` only, so someone with reduced
-// motion sees the highlight removed instantly instead of fading out (see docs/brand.md).
+// a faint accent tint that stay until the athlete edits the field or saves the form (see
+// ResultModal). The tint pulses once on arrival, then settles into a steady highlight.
 const CAPTURE_HIGHLIGHT_CLASS_NAME = "border-accent bg-accent/10";
-const CAPTURE_HIGHLIGHT_TRANSITION_CLASS_NAME = "motion-safe:transition-colors motion-safe:duration-700";
+const CAPTURE_PULSE_CLASS_NAME = "motion-safe:animate-[capture-pulse_var(--motion-duration-slow)_ease-out]";
+
+// Classes for a field while Gemini is still reading the screenshot: a moving accent
+// sweep (motion-safe only; a static accent border is the reduced-motion fallback).
+const CAPTURE_READING_CLASS_NAME = "motion-safe:field-shimmer border-accent/40";
 
 // A swatch (real radio + label, keyboard accessible) styled with the same
 // border/focus rules as the rest of the form's fields.
@@ -34,6 +39,37 @@ function timeDefaultValue(existingResult: RaceResult | undefined): string {
   return formatDuration(existingResult.timeSeconds);
 }
 
+// A field that can be auto-filled from a screenshot capture: same layout as the shared
+// `Field`, plus the "AI" badge next to its label when the capture just filled it. Built
+// locally instead of extending `Field` (owned by the `ui` area) since its `label` slot
+// only takes plain text.
+function CapturableField({
+  label,
+  htmlFor,
+  hint,
+  isHighlighted,
+  badgeLabel,
+  children,
+}: {
+  label: string;
+  htmlFor: string;
+  hint?: string;
+  isHighlighted: boolean;
+  badgeLabel?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label htmlFor={htmlFor} className="flex items-center gap-2 text-label text-text-muted">
+        {label}
+        {isHighlighted && badgeLabel ? <AiFilledBadge label={badgeLabel} /> : null}
+      </label>
+      {children}
+      {hint ? <span className="text-sm text-text-muted">{hint}</span> : null}
+    </div>
+  );
+}
+
 export function ResultForm({
   eventId,
   existingResult,
@@ -41,6 +77,9 @@ export function ResultForm({
   onSaved,
   prefilledValues,
   highlightedFields,
+  isCapturing,
+  aiBadgeLabel,
+  onFieldEdited,
 }: {
   eventId: string;
   existingResult: RaceResult | undefined;
@@ -48,17 +87,28 @@ export function ResultForm({
   onSaved?: () => void;
   // Values read from a screenshot; they win over the saved result until the athlete saves.
   prefilledValues?: ResultFormPrefill;
-  // Fields that were just filled by a screenshot capture, briefly highlighted.
+  // Fields that were filled by a screenshot capture and still carry the "AI" badge.
   highlightedFields?: CapturedFieldName[];
+  // True while Gemini is still reading a screenshot: the four capturable fields shimmer.
+  isCapturing?: boolean;
+  // "Filled by AI" / "Completado con IA" — the badge's accessible label.
+  aiBadgeLabel?: string;
+  // Called when the athlete edits a field that was carrying the "AI" badge, so the
+  // caller can drop it from `highlightedFields`.
+  onFieldEdited?: (field: CapturedFieldName) => void;
 }) {
   const saveResultForEvent = saveResultAction.bind(null, eventId);
   const [state, formAction, isPending] = useActionState(saveResultForEvent, INITIAL_STATE);
   const fields = messages.resultForm.fields;
   const errors = state.errors;
 
-  function captureHighlightClassName(field: CapturedFieldName): string {
-    const isHighlighted = highlightedFields?.includes(field) ?? false;
-    return joinClassNames(CAPTURE_HIGHLIGHT_TRANSITION_CLASS_NAME, isHighlighted && CAPTURE_HIGHLIGHT_CLASS_NAME);
+  function isFieldHighlighted(field: CapturedFieldName): boolean {
+    return highlightedFields?.includes(field) ?? false;
+  }
+
+  function captureFieldClassName(field: CapturedFieldName): string {
+    if (isCapturing) return CAPTURE_READING_CLASS_NAME;
+    return joinClassNames(isFieldHighlighted(field) && CAPTURE_HIGHLIGHT_CLASS_NAME, isFieldHighlighted(field) && CAPTURE_PULSE_CLASS_NAME);
   }
 
   // The action only returns (it never redirects, the form lives in a modal
@@ -81,18 +131,31 @@ export function ResultForm({
           {errors.place ? <FieldError message={messages.errors[errors.place]} /> : null}
         </Field>
 
-        <Field label={fields.time} htmlFor="time" hint={messages.resultForm.hints.time}>
+        <CapturableField
+          label={fields.time}
+          htmlFor="time"
+          hint={messages.resultForm.hints.time}
+          isHighlighted={isFieldHighlighted("time")}
+          badgeLabel={aiBadgeLabel}
+        >
           <Input
             id="time"
             name="time"
             type="text"
             defaultValue={prefilledValues?.time ?? timeDefaultValue(existingResult)}
-            className={captureHighlightClassName("time")}
+            className={captureFieldClassName("time")}
+            disabled={isCapturing}
+            onChange={() => onFieldEdited?.("time")}
           />
           {errors.time ? <FieldError message={messages.errors[errors.time]} /> : null}
-        </Field>
+        </CapturableField>
 
-        <Field label={fields.distance} htmlFor="distance">
+        <CapturableField
+          label={fields.distance}
+          htmlFor="distance"
+          isHighlighted={isFieldHighlighted("distance")}
+          badgeLabel={aiBadgeLabel}
+        >
           <Input
             id="distance"
             name="distance"
@@ -100,33 +163,49 @@ export function ResultForm({
             step="0.01"
             min={0}
             defaultValue={prefilledValues?.distance ?? existingResult?.distanceKm ?? ""}
-            className={captureHighlightClassName("distance")}
+            className={captureFieldClassName("distance")}
+            disabled={isCapturing}
+            onChange={() => onFieldEdited?.("distance")}
           />
           {errors.distance ? <FieldError message={messages.errors[errors.distance]} /> : null}
-        </Field>
+        </CapturableField>
 
-        <Field label={fields.avgHeartRate} htmlFor="avgHeartRate">
+        <CapturableField
+          label={fields.avgHeartRate}
+          htmlFor="avgHeartRate"
+          isHighlighted={isFieldHighlighted("avgHeartRate")}
+          badgeLabel={aiBadgeLabel}
+        >
           <Input
             id="avgHeartRate"
             name="avgHeartRate"
             type="number"
             min={1}
             defaultValue={prefilledValues?.avgHeartRate ?? existingResult?.avgHeartRate ?? ""}
-            className={captureHighlightClassName("avgHeartRate")}
+            className={captureFieldClassName("avgHeartRate")}
+            disabled={isCapturing}
+            onChange={() => onFieldEdited?.("avgHeartRate")}
           />
           {errors.avgHeartRate ? <FieldError message={messages.errors[errors.avgHeartRate]} /> : null}
-        </Field>
+        </CapturableField>
 
-        <Field label={fields.elevation} htmlFor="elevation">
+        <CapturableField
+          label={fields.elevation}
+          htmlFor="elevation"
+          isHighlighted={isFieldHighlighted("elevation")}
+          badgeLabel={aiBadgeLabel}
+        >
           <Input
             id="elevation"
             name="elevation"
             type="number"
             defaultValue={prefilledValues?.elevation ?? existingResult?.elevationM ?? ""}
-            className={captureHighlightClassName("elevation")}
+            className={captureFieldClassName("elevation")}
+            disabled={isCapturing}
+            onChange={() => onFieldEdited?.("elevation")}
           />
           {errors.elevation ? <FieldError message={messages.errors[errors.elevation]} /> : null}
-        </Field>
+        </CapturableField>
 
         <fieldset className="flex flex-col gap-1">
           <legend className="text-label text-text-muted">{fields.medal}</legend>

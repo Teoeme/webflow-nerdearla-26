@@ -12,6 +12,7 @@ export type ScreenshotCaptureLabels = {
   button: string;
   reading: string;
   filledTemplate: string;
+  filledByAi: string;
   errors: Record<CaptureFailureReason, string>;
 };
 
@@ -49,29 +50,40 @@ export function toResultFormValues(
 export function ScreenshotCapture({
   labels,
   onCaptured,
+  onReadingChange,
 }: {
   labels: ScreenshotCaptureLabels;
   onCaptured: (metrics: CapturedMetrics) => void;
+  // Lets the form show its own loading state (a shimmer on the target inputs)
+  // for as long as Gemini is reading the screenshot.
+  onReadingChange?: (isReading: boolean) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<CaptureState>({ status: "idle" });
 
   async function captureScreenshot(file: File): Promise<void> {
     setState({ status: "reading" });
+    onReadingChange?.(true);
 
-    const formData = new FormData();
-    formData.append("screenshot", file);
-    const response = await fetch("/api/metrics-capture", { method: "POST", body: formData });
-    const body = (await response.json().catch(() => null)) as { metrics?: CapturedMetrics; reason?: unknown } | null;
+    try {
+      const formData = new FormData();
+      formData.append("screenshot", file);
+      const response = await fetch("/api/metrics-capture", { method: "POST", body: formData });
+      const body = (await response.json().catch(() => null)) as { metrics?: CapturedMetrics; reason?: unknown } | null;
 
-    if (response.ok && body?.metrics) {
-      onCaptured(body.metrics);
-      setState({ status: "done", filledCount: countFilledFields(body.metrics) });
-      return;
+      if (response.ok && body?.metrics) {
+        onCaptured(body.metrics);
+        setState({ status: "done", filledCount: countFilledFields(body.metrics) });
+        return;
+      }
+
+      const reason = isCaptureFailureReason(body?.reason) ? body.reason : "unavailable";
+      setState({ status: "failed", reason });
+    } catch {
+      setState({ status: "failed", reason: "unavailable" });
+    } finally {
+      onReadingChange?.(false);
     }
-
-    const reason = isCaptureFailureReason(body?.reason) ? body.reason : "unavailable";
-    setState({ status: "failed", reason });
   }
 
   function handleFileSelected(event: ChangeEvent<HTMLInputElement>): void {
