@@ -10,23 +10,16 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/ui/status-pill";
 import { joinClassNames } from "@/components/ui/class-names";
-import type { Athlete } from "@/db/types";
-import { TagModal, TransferModal, type TagFormMessages, type TransferFormMessages } from "./action-forms";
+import { FadeInImage } from "./fade-in-image";
+import { SharePanel, type ShareState } from "./share-panel";
 import type { PhotoPill } from "./photo-status";
 
-// Present only on a photo I own: the same Modal-based actions as the grid card, reused
-// here so accepting a transfer or a tag from inside the lightbox goes through the exact
-// same server actions.
-export type LightboxOwnerActions = {
-  eventId: string;
-  candidates: Athlete[];
-  showTransferForm: boolean;
-  transferMessages: TransferFormMessages;
-  tagMessages: TagFormMessages;
-};
+// Present only on a photo I own: the same sharing state the grid card reads, reused here
+// so sending or tagging a friend from inside the lightbox goes through the exact same
+// server actions and the same Share panel.
+export type LightboxOwnerActions = ShareState;
 
 // Only plain strings and pre-computed data cross into this client component: the server
 // has already resolved every translated label (see event-gallery.tsx and photo-card.tsx).
@@ -171,9 +164,10 @@ export function LightboxProvider({
               >
                 ‹
               </button>
-              <img
+              <FadeInImage
                 src={currentPhoto.src}
                 alt={currentPhoto.alt}
+                wrapperClassName="max-h-[60vh] w-full"
                 className="max-h-[60vh] w-full rounded-sm object-contain"
               />
               <button
@@ -201,6 +195,8 @@ export function LightboxProvider({
                   {currentPhoto.ownerActions ? (
                     <PhotoOwnerActions
                       photoId={currentPhoto.id}
+                      photoSrc={currentPhoto.src}
+                      photoAlt={currentPhoto.alt}
                       ownerActions={currentPhoto.ownerActions}
                       onActionModalOpenChange={(isActionModalOpen) =>
                         isActionModalOpen ? closeForActionModal() : reopenAfterActionModal()
@@ -224,7 +220,12 @@ export function LightboxProvider({
                     index === openIndex ? "outline outline-2 outline-accent" : "opacity-60 hover:opacity-100",
                   )}
                 >
-                  <img src={photo.src} alt="" className="h-full w-full rounded-sm object-cover" />
+                  <FadeInImage
+                    src={photo.src}
+                    alt=""
+                    wrapperClassName="h-full w-full rounded-sm"
+                    className="h-full w-full rounded-sm object-cover"
+                  />
                 </button>
               ))}
             </div>
@@ -235,80 +236,58 @@ export function LightboxProvider({
   );
 }
 
-// The Transfer/Tag buttons in the lightbox footer open the same Modal as the grid
-// card's menu — a fresh `key` per open discards any outcome message left over from a
-// previous open, without disturbing the currently open instance while it closes.
+// The Share button in the lightbox footer opens the same panel as the grid card — a
+// fresh `key` per open discards any outcome message left over from a previous open,
+// without disturbing the currently open instance while it closes.
 //
-// That Modal is a Radix Dialog portaled to `body`, while the lightbox is a native
+// That panel is a Radix Dialog portaled to `body`, while the lightbox is a native
 // <dialog> in the browser's top layer: the portal would render underneath it and be
 // unreachable. `onActionModalOpenChange` tells the lightbox to close its own dialog
 // right before this one opens, and reopen it once this one closes.
 function PhotoOwnerActions({
   photoId,
+  photoSrc,
+  photoAlt,
   ownerActions,
   onActionModalOpenChange,
 }: {
   photoId: string;
+  photoSrc: string;
+  photoAlt: string;
   ownerActions: LightboxOwnerActions;
   onActionModalOpenChange: (isOpen: boolean) => void;
 }) {
-  const [isTransferOpen, setTransferOpen] = useState(false);
-  const [transferInstance, setTransferInstance] = useState(0);
-  const [isTagOpen, setTagOpen] = useState(false);
-  const [tagInstance, setTagInstance] = useState(0);
+  const [isShareOpen, setShareOpen] = useState(false);
+  const [shareInstance, setShareInstance] = useState(0);
 
-  function openTransfer(): void {
-    setTransferInstance((instance) => instance + 1);
-    setTransferOpen(true);
+  function openShare(): void {
+    setShareInstance((instance) => instance + 1);
+    setShareOpen(true);
     onActionModalOpenChange(true);
   }
 
-  function openTag(): void {
-    setTagInstance((instance) => instance + 1);
-    setTagOpen(true);
-    onActionModalOpenChange(true);
-  }
-
-  function handleTransferOpenChange(isOpen: boolean): void {
-    setTransferOpen(isOpen);
-    onActionModalOpenChange(isOpen);
-  }
-
-  function handleTagOpenChange(isOpen: boolean): void {
-    setTagOpen(isOpen);
+  function handleShareOpenChange(isOpen: boolean): void {
+    setShareOpen(isOpen);
     onActionModalOpenChange(isOpen);
   }
 
   return (
     <div className="flex flex-wrap gap-3">
-      <Button type="button" variant="outline" onClick={openTag}>
-        {ownerActions.tagMessages.menuLabel}
-      </Button>
-      {ownerActions.showTransferForm ? (
-        <Button type="button" variant="primary" onClick={openTransfer}>
-          {ownerActions.transferMessages.menuLabel}
-        </Button>
-      ) : null}
-
-      {ownerActions.showTransferForm ? (
-        <TransferModal
-          key={transferInstance}
-          open={isTransferOpen}
-          onOpenChange={handleTransferOpenChange}
-          photoId={photoId}
-          eventId={ownerActions.eventId}
-          candidates={ownerActions.candidates}
-          messages={ownerActions.transferMessages}
-        />
-      ) : null}
-      <TagModal
-        key={tagInstance}
-        open={isTagOpen}
-        onOpenChange={handleTagOpenChange}
+      <button
+        type="button"
+        onClick={openShare}
+        className="rounded-sm border border-line px-3 py-1.5 text-label text-text transition-colors hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+      >
+        {ownerActions.messages.action}
+      </button>
+      <SharePanel
+        key={shareInstance}
+        open={isShareOpen}
+        onOpenChange={handleShareOpenChange}
         photoId={photoId}
-        eventId={ownerActions.eventId}
-        candidates={ownerActions.candidates}
-        messages={ownerActions.tagMessages}
+        photoSrc={photoSrc}
+        photoAlt={photoAlt}
+        share={ownerActions}
       />
     </div>
   );
@@ -330,10 +309,11 @@ export function PhotoThumbnailButton({
       onClick={() => open(photoId)}
       className="absolute inset-0 block h-full w-full cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
     >
-      <img
+      <FadeInImage
         src={src}
         alt={alt}
         loading="lazy"
+        wrapperClassName="h-full w-full"
         className="h-full w-full object-cover transition-transform duration-200 ease-out group-hover:scale-105 group-focus-within:scale-105"
       />
     </button>
