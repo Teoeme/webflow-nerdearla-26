@@ -1,6 +1,6 @@
 # 09 · results · Medal board, event detail and form layout
 
-**Status:** todo
+**Status:** done
 
 ## Goal
 
