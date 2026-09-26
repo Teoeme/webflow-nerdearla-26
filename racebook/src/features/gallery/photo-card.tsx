@@ -12,6 +12,36 @@ import { PhotoThumbnailButton, type LightboxPhoto } from "./lightbox";
 const overlayVisibilityClassName =
   "opacity-60 transition-opacity duration-150 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100";
 
+// Compact icon buttons for the owner-actions toolbar: text labels ("Set as cover",
+// "Share") wrap on a small square tile, so the tile shows an icon only and carries the
+// label as `aria-label`/`title` instead.
+function CoverIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true">
+      <path
+        d="M12 3.5l2.47 5.01 5.53.8-4 3.9.94 5.5L12 16.9l-4.94 2.6.94-5.5-4-3.9 5.53-.8L12 3.5z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ShareIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" aria-hidden="true">
+      <circle cx="6" cy="12" r="2.2" stroke="currentColor" strokeWidth="1.4" />
+      <circle cx="17" cy="6" r="2.2" stroke="currentColor" strokeWidth="1.4" />
+      <circle cx="17" cy="18" r="2.2" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M8 11l7-3.5M8 13l7 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+const iconButtonClassName =
+  "flex h-7 w-7 items-center justify-center rounded-sm border border-line bg-background/70 text-text hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent";
+
 // One grid tile in the event gallery. Reuses the same per-photo view model the
 // lightbox renders (`LightboxPhoto`) so the tile and the lightbox footer never
 // disagree on pills, tagged-by label or the sharing state; only plain data and
@@ -50,17 +80,21 @@ export function PhotoCard({ photo }: { photo: LightboxPhoto }) {
             <input type="hidden" name="photoId" value={photo.id} />
             <button
               type="submit"
-              className="flex h-7 items-center rounded-sm border border-line bg-background/70 px-2 text-label text-text hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+              aria-label={ownerActions.messages.setCover}
+              title={ownerActions.messages.setCover}
+              className={iconButtonClassName}
             >
-              {ownerActions.messages.setCover}
+              <CoverIcon />
             </button>
           </form>
           <button
             type="button"
             onClick={openShare}
-            className="flex h-7 items-center gap-1 rounded-sm border border-line bg-background/70 px-2 text-label text-text hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+            aria-label={ownerActions.messages.action}
+            title={ownerActions.messages.action}
+            className={iconButtonClassName}
           >
-            {ownerActions.messages.action}
+            <ShareIcon />
           </button>
         </div>
       ) : null}
