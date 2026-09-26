@@ -12,6 +12,7 @@ export type RaceEvent = {
   date: string; // YYYY-MM-DD
   location: string;
   discipline: Discipline;
+  coverPhotoId: string | null;
 };
 
 export type RaceResult = {

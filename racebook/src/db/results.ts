@@ -21,6 +21,7 @@ type EventWithResultRow = {
   date: string;
   location: string;
   discipline: Discipline;
+  cover_photo_id: string | null;
   result_id: string | null;
   athlete_id: string | null;
   place: number | null;
@@ -55,6 +56,7 @@ function toEventEntry(row: EventWithResultRow): EventEntry {
     date: row.date,
     location: row.location,
     discipline: row.discipline,
+    coverPhotoId: row.cover_photo_id,
   };
 
   const result =
@@ -88,7 +90,7 @@ export async function listEventEntries(ownerId: string): Promise<EventEntry[]> {
   const database = await getDatabase();
   const { results } = await database
     .prepare(
-      `SELECT e.id, e.owner_id, e.name, e.date, e.location, e.discipline,
+      `SELECT e.id, e.owner_id, e.name, e.date, e.location, e.discipline, e.cover_photo_id,
               r.id AS result_id, r.athlete_id, r.place, r.time_seconds, r.medal,
               r.distance_km, r.pace_seconds_per_km, r.avg_heart_rate, r.elevation_m
        FROM events e

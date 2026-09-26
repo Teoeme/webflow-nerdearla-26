@@ -18,6 +18,13 @@ const MAX_CARD_PHOTO_PREVIEWS = 3;
 const MAX_STAGGERED_CARDS = 6;
 const STAGGER_STEP_MS = 40;
 
+// The cover shown on the card: the event's own cover photo, or, absent that, its
+// most recent photo (`photos` is already newest-first). No cover and no photos at
+// all: the card keeps its plain, image-less look.
+function coverPhotoId(event: EventEntry["event"], photos: EventPhoto[]): string | null {
+  return event.coverPhotoId ?? photos[0]?.id ?? null;
+}
+
 export function EventCard({
   entry,
   photos,
@@ -34,10 +41,11 @@ export function EventCard({
   const { event, result } = entry;
   const hiddenPhotoCount = photos.length - MAX_CARD_PHOTO_PREVIEWS;
   const staggerDelayMs = Math.min(index, MAX_STAGGERED_CARDS - 1) * STAGGER_STEP_MS;
+  const coverId = coverPhotoId(event, photos);
 
   return (
     <article
-      className="group panel flex h-full cursor-pointer flex-col gap-3 p-5 transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_0_0_1px_rgba(255,255,255,0.18)] focus-within:-translate-y-0.5 focus-within:shadow-[0_0_0_1px_rgba(255,255,255,0.18)] motion-safe:animate-[card-fade-up_220ms_ease-out_backwards]"
+      className="group panel motion-safe:panel-interactive relative flex h-full cursor-pointer flex-col gap-3 overflow-hidden p-5 motion-safe:animate-[card-fade-up_220ms_ease-out_backwards]"
       style={{ animationDelay: `${staggerDelayMs}ms` }}
     >
       {/* The whole card links to the event: an invisible anchor fills it, and
@@ -48,6 +56,18 @@ export function EventCard({
         aria-label={event.name}
         className="absolute inset-0 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
       />
+
+      {coverId ? (
+        <div className="relative -mx-5 -mt-5 aspect-video overflow-hidden">
+          <img
+            src={`/api/photos/${coverId}`}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0d0e11] to-transparent" />
+        </div>
+      ) : null}
 
       <div className="flex items-start justify-between gap-3">
         <span className="text-heading text-lg">{event.name}</span>
