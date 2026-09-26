@@ -9,6 +9,7 @@ import { getDictionary } from "@/i18n/dictionary";
 import { getCurrentAthlete } from "@/session/current-athlete";
 import { LightboxProvider, type LightboxPhoto } from "./lightbox";
 import { PhotoCard } from "./photo-card";
+import { pillsForOwnedPhoto } from "./photo-status";
 import { UploadForm } from "./upload-form";
 
 function toPendingRecipientByPhotoId(
@@ -52,12 +53,28 @@ export async function EventGallery({ eventId }: { eventId: string }): Promise<JS
   const tagsByPhotoId = toTagsByPhotoId(openTags);
   const displayEventName = event?.name ?? eventId;
 
-  const lightboxPhotos: LightboxPhoto[] = photos.map((photo) => ({
-    id: photo.id,
-    src: `/api/photos/${photo.id}`,
-    alt: messages.photoAlt(displayEventName),
-    taggedByLabel: photo.taggedByName ? messages.taggedBy(photo.taggedByName) : null,
-  }));
+  const lightboxPhotos: LightboxPhoto[] = photos.map((photo) => {
+    const isOwnPhoto = photo.taggedByName === null;
+    const pendingRecipient = pendingRecipientByPhotoId.get(photo.id);
+    const tags = tagsByPhotoId.get(photo.id) ?? [];
+
+    return {
+      id: photo.id,
+      src: `/api/photos/${photo.id}`,
+      alt: messages.photoAlt(displayEventName),
+      taggedByLabel: photo.taggedByName ? messages.taggedBy(photo.taggedByName) : null,
+      pills: isOwnPhoto ? pillsForOwnedPhoto(photo.id, pendingRecipient, tags, messages) : [],
+      ownerActions: isOwnPhoto
+        ? {
+            eventId,
+            candidates: transferCandidates,
+            showTransferForm: pendingRecipient === undefined,
+            transferMessages: messages.transfer,
+            tagMessages: messages.tag,
+          }
+        : null,
+    };
+  });
 
   return (
     <section className="flex flex-col gap-4">

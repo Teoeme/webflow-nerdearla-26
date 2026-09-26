@@ -10,14 +10,32 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { StatusPill } from "@/components/ui/status-pill";
+import { joinClassNames } from "@/components/ui/class-names";
+import type { Athlete } from "@/db/types";
+import { TagForm, TransferForm, type TagFormMessages, type TransferFormMessages } from "./action-forms";
+import type { PhotoPill } from "./photo-status";
 
-// Only plain strings cross into this client component: the server has already resolved
-// every translated label (see event-gallery.tsx and photo-card.tsx).
+// Present only on a photo I own: the same Select-based forms as the grid card, reused
+// here so accepting a transfer or a tag from inside the lightbox goes through the exact
+// same server actions.
+export type LightboxOwnerActions = {
+  eventId: string;
+  candidates: Athlete[];
+  showTransferForm: boolean;
+  transferMessages: TransferFormMessages;
+  tagMessages: TagFormMessages;
+};
+
+// Only plain strings and pre-computed data cross into this client component: the server
+// has already resolved every translated label (see event-gallery.tsx and photo-card.tsx).
 export type LightboxPhoto = {
   id: string;
   src: string;
   alt: string;
   taggedByLabel: string | null;
+  pills: PhotoPill[];
+  ownerActions: LightboxOwnerActions | null;
 };
 
 export type LightboxLabels = {
@@ -101,10 +119,10 @@ export function LightboxProvider({
       <dialog
         ref={dialogRef}
         onClose={close}
-        className="panel m-auto max-w-3xl bg-background p-0 backdrop:bg-black/80"
+        className="panel m-auto flex max-h-[92vh] w-[min(96vw,64rem)] max-w-none flex-col gap-3 bg-background p-4 backdrop:bg-black/80"
       >
         {currentPhoto ? (
-          <div className="flex flex-col gap-3 p-4">
+          <>
             <div className="flex items-center justify-between gap-4">
               <span className="text-label text-text-muted">
                 {(openIndex ?? 0) + 1} {labels.counterSeparator} {photos.length}
@@ -112,28 +130,89 @@ export function LightboxProvider({
               <button
                 type="button"
                 onClick={close}
-                className="text-label text-text-muted hover:text-text"
+                aria-label={labels.close}
+                className="flex h-8 w-8 items-center justify-center rounded-sm border border-line text-text-muted hover:text-text"
               >
-                {labels.close}
+                ✕
               </button>
             </div>
-            <img
-              src={currentPhoto.src}
-              alt={currentPhoto.alt}
-              className="max-h-[70vh] w-full rounded-sm object-contain"
-            />
-            {currentPhoto.taggedByLabel ? (
-              <p className="text-label text-text-muted">{currentPhoto.taggedByLabel}</p>
-            ) : null}
-            <div className="flex justify-between gap-4">
-              <button type="button" onClick={showPrevious} className="text-label text-accent">
-                {labels.previous}
+
+            <div className="relative flex flex-1 items-center justify-center overflow-hidden">
+              <button
+                type="button"
+                onClick={showPrevious}
+                aria-label={labels.previous}
+                className="absolute left-2 z-10 flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-background/70 text-xl text-text hover:opacity-80"
+              >
+                ‹
               </button>
-              <button type="button" onClick={showNext} className="text-label text-accent">
-                {labels.next}
+              <img
+                src={currentPhoto.src}
+                alt={currentPhoto.alt}
+                className="max-h-[60vh] w-full rounded-sm object-contain"
+              />
+              <button
+                type="button"
+                onClick={showNext}
+                aria-label={labels.next}
+                className="absolute right-2 z-10 flex h-10 w-10 items-center justify-center rounded-sm border border-line bg-background/70 text-xl text-text hover:opacity-80"
+              >
+                ›
               </button>
             </div>
-          </div>
+
+            <div className="panel flex flex-col gap-3 p-3">
+              {currentPhoto.taggedByLabel ? (
+                <StatusPill status="accepted" label={currentPhoto.taggedByLabel} />
+              ) : (
+                <>
+                  {currentPhoto.pills.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {currentPhoto.pills.map((pill) => (
+                        <StatusPill key={pill.id} status={pill.status} label={pill.label} />
+                      ))}
+                    </div>
+                  ) : null}
+                  {currentPhoto.ownerActions ? (
+                    <div className="flex flex-wrap gap-3">
+                      {currentPhoto.ownerActions.showTransferForm ? (
+                        <TransferForm
+                          photoId={currentPhoto.id}
+                          eventId={currentPhoto.ownerActions.eventId}
+                          candidates={currentPhoto.ownerActions.candidates}
+                          messages={currentPhoto.ownerActions.transferMessages}
+                        />
+                      ) : null}
+                      <TagForm
+                        photoId={currentPhoto.id}
+                        eventId={currentPhoto.ownerActions.eventId}
+                        candidates={currentPhoto.ownerActions.candidates}
+                        messages={currentPhoto.ownerActions.tagMessages}
+                      />
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </div>
+
+            <div className="hidden gap-2 overflow-x-auto sm:flex">
+              {photos.map((photo, index) => (
+                <button
+                  key={photo.id}
+                  type="button"
+                  onClick={() => setOpenIndex(index)}
+                  aria-label={photo.alt}
+                  aria-current={index === openIndex}
+                  className={joinClassNames(
+                    "h-14 w-14 flex-none rounded-sm",
+                    index === openIndex ? "outline outline-2 outline-accent" : "opacity-60 hover:opacity-100",
+                  )}
+                >
+                  <img src={photo.src} alt="" className="h-full w-full rounded-sm object-cover" />
+                </button>
+              ))}
+            </div>
+          </>
         ) : null}
       </dialog>
     </LightboxContext.Provider>
