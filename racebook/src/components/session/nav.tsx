@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { joinClassNames } from "../ui/class-names";
 
 type NavItem = {
   href: string;
@@ -10,14 +9,17 @@ type NavItem = {
   pendingCount: number;
 };
 
+// Top bar on mobile (horizontal, underline for the active item), vertical
+// list in the desktop sidebar (left bar for the active item, full width so
+// the row's hover tint and the inbox count reach the edge).
 const NAV_ITEM_CLASS_NAME =
-  "text-label border-b-2 border-transparent pb-1 text-text-muted transition-colors hover:text-text aria-[current=page]:border-accent aria-[current=page]:text-text";
+  "flex items-center justify-between gap-2 border-b-2 border-transparent pb-1 text-sm font-semibold text-text-muted transition-colors hover:text-text aria-[current=page]:border-accent aria-[current=page]:text-text lg:w-full lg:rounded-sm lg:border-b-0 lg:border-l-2 lg:px-2.5 lg:py-2 lg:pb-2 lg:hover:bg-line/50";
 
 export function Nav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
 
   return (
-    <nav className="flex gap-6">
+    <nav className="flex gap-6 lg:w-full lg:flex-col lg:gap-1">
       {items.map((item) => {
         const isCurrentPage = pathname === item.href;
 
@@ -26,7 +28,7 @@ export function Nav({ items }: { items: NavItem[] }) {
             key={item.href}
             href={item.href}
             aria-current={isCurrentPage ? "page" : undefined}
-            className={joinClassNames(NAV_ITEM_CLASS_NAME, "flex items-center gap-2")}
+            className={NAV_ITEM_CLASS_NAME}
           >
             <span>{item.label}</span>
             {item.pendingCount > 0 ? (

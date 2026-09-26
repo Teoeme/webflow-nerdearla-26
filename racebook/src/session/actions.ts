@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { findAthlete } from "../db/athletes";
 import { ATHLETE_COOKIE_NAME } from "./current-athlete";
@@ -23,6 +24,9 @@ export async function switchAthlete(formData: FormData): Promise<void> {
     sameSite: "lax",
   });
   revalidatePath("/", "layout");
+  // The page the athlete was on may belong to the previous athlete (a
+  // private event, a result); the medal board always exists for everyone.
+  redirect("/");
 }
 
 export async function switchLocale(formData: FormData): Promise<void> {

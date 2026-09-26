@@ -12,22 +12,34 @@ const MAX_CARD_PHOTO_PREVIEWS = 3;
 // One card of the medal board grid: an event the athlete owns, with their own
 // result attached when they logged one, or a call to log it otherwise, plus a
 // peek at the event's photos when there are any.
+// Staggered fade-up on first render: max 6 items get an increasing delay,
+// everything past that shares the last step. Respects prefers-reduced-motion
+// through Tailwind's `motion-safe:` variant (no animation at all otherwise).
+const MAX_STAGGERED_CARDS = 6;
+const STAGGER_STEP_MS = 40;
+
 export function EventCard({
   entry,
   photos,
   locale,
   messages,
+  index,
 }: {
   entry: EventEntry;
   photos: EventPhoto[];
   locale: Locale;
   messages: Dictionary["results"];
+  index: number;
 }) {
   const { event, result } = entry;
   const hiddenPhotoCount = photos.length - MAX_CARD_PHOTO_PREVIEWS;
+  const staggerDelayMs = Math.min(index, MAX_STAGGERED_CARDS - 1) * STAGGER_STEP_MS;
 
   return (
-    <article className="panel flex h-full flex-col gap-3 p-5">
+    <article
+      className="group panel flex h-full cursor-pointer flex-col gap-3 p-5 transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_0_0_1px_rgba(255,255,255,0.18)] focus-within:-translate-y-0.5 focus-within:shadow-[0_0_0_1px_rgba(255,255,255,0.18)] motion-safe:animate-[card-fade-up_220ms_ease-out_backwards]"
+      style={{ animationDelay: `${staggerDelayMs}ms` }}
+    >
       {/* The whole card links to the event: an invisible anchor fills it, and
           the visible CTA link below sits above it (z-10) so both stay
           independently clickable. */}
@@ -63,7 +75,7 @@ export function EventCard({
       ) : (
         <div className="flex flex-wrap items-center gap-3">
           <span className="text-sm text-text-muted">{messages.medalBoard.card.noResultYet}</span>
-          <ButtonLink href={`/events/${event.id}/result`} variant="outline" className="relative z-10">
+          <ButtonLink href={`/events/${event.id}?logResult=1`} variant="outline" className="relative z-10">
             {messages.medalBoard.card.logResultCta}
           </ButtonLink>
         </div>
@@ -77,7 +89,7 @@ export function EventCard({
               src={`/api/photos/${photo.id}`}
               alt=""
               loading="lazy"
-              className="h-11 w-11 rounded-sm border border-line object-cover"
+              className="h-11 w-11 rounded-sm border border-line object-cover transition-transform duration-200 ease-out group-hover:scale-105"
             />
           ))}
           {hiddenPhotoCount > 0 ? (

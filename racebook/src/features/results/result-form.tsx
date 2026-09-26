@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { MedalBadge } from "@/components/ui/medal-badge";
@@ -27,15 +27,27 @@ export function ResultForm({
   eventId,
   existingResult,
   messages,
+  onSaved,
 }: {
   eventId: string;
   existingResult: RaceResult | undefined;
   messages: ClientResultsMessages;
+  onSaved?: () => void;
 }) {
   const saveResultForEvent = saveResultAction.bind(null, eventId);
   const [state, formAction, isPending] = useActionState(saveResultForEvent, INITIAL_STATE);
   const fields = messages.resultForm.fields;
   const errors = state.errors;
+
+  // The action only returns (it never redirects, the form lives in a modal
+  // on the event page): tell the caller once a submission finishes clean.
+  const wasSubmitting = useRef(false);
+  useEffect(() => {
+    if (wasSubmitting.current && !isPending && Object.keys(state.errors).length === 0) {
+      onSaved?.();
+    }
+    wasSubmitting.current = isPending;
+  }, [isPending, state, onSaved]);
 
   return (
     <form action={formAction} className="flex flex-col gap-6">

@@ -1,9 +1,10 @@
-import { ButtonLink } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Stat } from "@/components/ui/stat";
 import { listEventPhotos, type EventPhoto } from "@/db/photos";
 import { listEventEntries, type EventEntry } from "@/db/results";
 import type { Medal } from "@/db/types";
 import { EventCard } from "@/features/results/event-card";
+import { LogRaceModal } from "@/features/results/log-race-modal";
 import { getCurrentAthlete } from "@/session/current-athlete";
 import { getCurrentLocale } from "@/i18n/current-locale";
 import { getDictionary } from "@/i18n/dictionary";
@@ -54,7 +55,7 @@ export default async function MedalBoardPage() {
           <h1 className="text-display text-3xl">{dictionary.common.nav.medalBoard}</h1>
           <p className="text-text-muted">{dictionary.common.greeting(athlete.name)}</p>
         </div>
-        <ButtonLink href="/events/new">{messages.medalBoard.logRace}</ButtonLink>
+        <LogRaceModal messages={messages} closeLabel={dictionary.common.modal.closeLabel} />
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -68,18 +69,36 @@ export default async function MedalBoardPage() {
       {entries.length === 0 ? (
         <div className="panel flex flex-col items-start gap-3 p-6">
           <p>{messages.medalBoard.emptyState.message}</p>
-          <ButtonLink href="/events/new" variant="outline">
-            {messages.medalBoard.emptyState.cta}
-          </ButtonLink>
+          <LogRaceModal
+            messages={messages}
+            closeLabel={dictionary.common.modal.closeLabel}
+            trigger={<Button variant="outline">{messages.medalBoard.emptyState.cta}</Button>}
+          />
         </div>
       ) : (
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {entries.map((entry, index) => (
-            <li key={entry.event.id}>
-              <EventCard entry={entry} photos={photosByEvent[index]} locale={locale} messages={messages} />
-            </li>
-          ))}
-        </ul>
+        <>
+          {/* Entry motion for the cards below (`EventCard`); off entirely
+              under prefers-reduced-motion via Tailwind's motion-safe:. */}
+          <style>{`
+            @keyframes card-fade-up {
+              from { opacity: 0; transform: translateY(6px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+          `}</style>
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {entries.map((entry, index) => (
+              <li key={entry.event.id}>
+                <EventCard
+                  entry={entry}
+                  photos={photosByEvent[index]}
+                  locale={locale}
+                  messages={messages}
+                  index={index}
+                />
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </main>
   );

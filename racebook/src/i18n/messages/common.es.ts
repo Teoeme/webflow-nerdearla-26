@@ -8,4 +8,7 @@ export const commonEs: CommonMessages = {
   viewAsLabel: "Ver como",
   languageSwitcherLabel: "Idioma",
   greeting: (athleteName: string) => `Hola de nuevo, ${athleteName}`,
+  modal: {
+    closeLabel: "Cerrar",
+  },
 };

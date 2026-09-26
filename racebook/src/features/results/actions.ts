@@ -100,9 +100,11 @@ export async function saveResultAction(
     elevationM: elevationM ?? null,
   });
 
+  // No redirect: the form lives inside a modal on the event page itself.
+  // The caller closes the modal once this returns with no errors.
   revalidatePath(`/events/${eventId}`);
   revalidatePath("/");
-  redirect(`/events/${eventId}`);
+  return { errors: {} };
 }
 
 export type NewEventFieldName = "name" | "date" | "location" | "discipline";
@@ -130,5 +132,8 @@ export async function createEventAction(
   const athlete = await getCurrentAthlete();
   const event = await createEvent(athlete.id, { name, date, location, discipline: disciplineInput as Discipline });
   revalidatePath("/");
-  redirect(`/events/${event.id}/result`);
+  // The event page opens with the result modal already up: logging a race
+  // is a two-step flow (event, then result) done as one from the athlete's
+  // point of view.
+  redirect(`/events/${event.id}?logResult=1`);
 }
