@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import { ButtonLink } from "@/components/ui/button";
 import { Stat } from "@/components/ui/stat";
 import { findOwnedEvent } from "@/db/events";
 import { findResult } from "@/db/results";
 import { EventGallery } from "@/features/gallery/event-gallery";
+import { ResultModal } from "@/features/results/result-modal";
 import { buildResultStats } from "@/features/results/result-stats";
 import { getCurrentAthlete } from "@/session/current-athlete";
 import { getCurrentLocale } from "@/i18n/current-locale";
@@ -12,10 +12,13 @@ import { formatEventDate } from "@/i18n/formatters";
 
 export default async function EventDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ eventId: string }>;
+  searchParams: Promise<{ logResult?: string }>;
 }) {
   const { eventId } = await params;
+  const { logResult } = await searchParams;
   const athlete = await getCurrentAthlete();
   const event = await findOwnedEvent(eventId, athlete.id);
   if (!event) notFound();
@@ -25,6 +28,7 @@ export default async function EventDetailPage({
 
   const myResult = await findResult(athlete.id, event.id);
   const myResultStats = buildResultStats(myResult, messages, locale);
+  const eventSummary = `${event.name} · ${formatEventDate(event.date, locale)} · ${event.location}`;
 
   return (
     <main className="flex flex-col gap-8 p-6">
@@ -49,9 +53,14 @@ export default async function EventDetailPage({
         ) : (
           <p className="flex-1 text-text-muted">{messages.medalBoard.card.noResultYet}</p>
         )}
-        <ButtonLink href={`/events/${event.id}/result`} variant="outline">
-          {myResult ? messages.eventDetail.myResult.editCta : messages.eventDetail.myResult.logCta}
-        </ButtonLink>
+        <ResultModal
+          eventId={event.id}
+          existingResult={myResult}
+          messages={messages}
+          closeLabel={dictionary.common.modal.closeLabel}
+          eventSummary={eventSummary}
+          initiallyOpen={logResult === "1"}
+        />
       </section>
 
       <EventGallery eventId={event.id} />
