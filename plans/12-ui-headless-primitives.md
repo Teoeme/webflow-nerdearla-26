@@ -1,6 +1,6 @@
 # 12 · ui · Headless primitives (Radix)
 
-**Status:** todo
+**Status:** done
 
 ## Goal
 
