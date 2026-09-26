@@ -16,8 +16,8 @@ export function AthleteSwitcher({ athletes, currentAthleteId, label }: AthleteSw
   const options = athletes.map((athlete) => ({ value: athlete.id, label: athlete.name }));
 
   return (
-    <form ref={formRef} action={switchAthlete}>
-      <label className="flex items-center gap-3">
+    <form ref={formRef} action={switchAthlete} className="lg:w-full">
+      <label className="flex items-center gap-3 lg:flex-col lg:items-stretch lg:gap-1.5">
         <span className="text-label text-text-muted">{label}</span>
         <Select
           key={currentAthleteId}
