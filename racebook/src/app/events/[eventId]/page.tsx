@@ -60,6 +60,7 @@ export default async function EventDetailPage({
           closeLabel={dictionary.common.modal.closeLabel}
           eventSummary={eventSummary}
           initiallyOpen={logResult === "1"}
+          captureLabels={dictionary.aiCapture.screenshotCapture}
         />
       </section>
 

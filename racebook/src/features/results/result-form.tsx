@@ -9,6 +9,9 @@ import { formatDuration } from "@/i18n/formatters";
 import { saveResultAction, type ResultFormState } from "./actions";
 import type { ClientResultsMessages } from "./client-messages";
 import { FieldError } from "./field-error";
+import type { toResultFormValues } from "@/features/ai-capture/screenshot-capture";
+
+type ResultFormPrefill = ReturnType<typeof toResultFormValues>;
 
 const INITIAL_STATE: ResultFormState = { errors: {} };
 const MEDAL_OPTIONS: Medal[] = ["bronze", "silver", "gold"];
@@ -28,11 +31,14 @@ export function ResultForm({
   existingResult,
   messages,
   onSaved,
+  prefilledValues,
 }: {
   eventId: string;
   existingResult: RaceResult | undefined;
   messages: ClientResultsMessages;
   onSaved?: () => void;
+  // Values read from a screenshot; they win over the saved result until the athlete saves.
+  prefilledValues?: ResultFormPrefill;
 }) {
   const saveResultForEvent = saveResultAction.bind(null, eventId);
   const [state, formAction, isPending] = useActionState(saveResultForEvent, INITIAL_STATE);
@@ -60,7 +66,7 @@ export function ResultForm({
         </Field>
 
         <Field label={fields.time} htmlFor="time" hint={messages.resultForm.hints.time}>
-          <Input id="time" name="time" type="text" defaultValue={timeDefaultValue(existingResult)} />
+          <Input id="time" name="time" type="text" defaultValue={prefilledValues?.time ?? timeDefaultValue(existingResult)} />
           {errors.time ? <FieldError message={messages.errors[errors.time]} /> : null}
         </Field>
 
@@ -71,7 +77,7 @@ export function ResultForm({
             type="number"
             step="0.01"
             min={0}
-            defaultValue={existingResult?.distanceKm ?? ""}
+            defaultValue={prefilledValues?.distance ?? existingResult?.distanceKm ?? ""}
           />
           {errors.distance ? <FieldError message={messages.errors[errors.distance]} /> : null}
         </Field>
@@ -82,13 +88,13 @@ export function ResultForm({
             name="avgHeartRate"
             type="number"
             min={1}
-            defaultValue={existingResult?.avgHeartRate ?? ""}
+            defaultValue={prefilledValues?.avgHeartRate ?? existingResult?.avgHeartRate ?? ""}
           />
           {errors.avgHeartRate ? <FieldError message={messages.errors[errors.avgHeartRate]} /> : null}
         </Field>
 
         <Field label={fields.elevation} htmlFor="elevation">
-          <Input id="elevation" name="elevation" type="number" defaultValue={existingResult?.elevationM ?? ""} />
+          <Input id="elevation" name="elevation" type="number" defaultValue={prefilledValues?.elevation ?? existingResult?.elevationM ?? ""} />
           {errors.elevation ? <FieldError message={messages.errors[errors.elevation]} /> : null}
         </Field>
 
