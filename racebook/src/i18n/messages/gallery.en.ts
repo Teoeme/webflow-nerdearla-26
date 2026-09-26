@@ -5,14 +5,9 @@ export const galleryEn = {
     taggedBy: (athleteName: string) => `Tagged by ${athleteName}`,
     emptyState: "No photos yet — upload the first one from this event.",
     upload: {
-      button: "Upload photos",
-      dropZone: "Drop photos here, or",
-      browseFiles: "browse files",
-      // A template, not a function: UploadForm is a client component, and a function
-      // can't cross the server/client boundary as a prop (only the messages it needs
-      // to render live progress client-side can).
-      progressTemplate: "{done} of {total} uploaded",
-      waiting: "Waiting…",
+      addPhotos: "Add photos",
+      hint: "JPG, PNG or WEBP · drag & drop",
+      dropHint: "Drop to upload",
       uploading: "Uploading…",
       done: "Uploaded",
       rejected: {
@@ -20,33 +15,24 @@ export const galleryEn = {
         size: "Rejected — must be under 10 MB",
         missing: "Rejected — couldn't upload",
       },
-      close: "Close",
+      dismiss: "Dismiss",
     },
-    actionsLabel: "Photo actions",
-    transfer: {
-      fieldLabel: "Send to…",
-      placeholder: "Choose a friend",
-      button: "Send photo",
-      menuLabel: "Transfer…",
-      modalTitle: "Send this photo",
+    share: {
+      action: "Share",
+      modalTitle: "Share this photo",
       closeLabel: "Close",
+      modeSend: { label: "Send it to them", description: "Moves the photo to their gallery" },
+      modeTag: { label: "Tag them", description: "The photo stays with you and also appears in theirs" },
+      choosePrompt: "Choose a friend",
+      sendButton: (athleteName: string) => `Send photo to ${athleteName}`,
+      tagButton: (athleteName: string) => `Tag ${athleteName}`,
+      pendingPill: "Pending",
+      addedPill: "Added",
       outcomes: {
         not_owner: "You're no longer the owner of this photo.",
         already_pending: "This photo already has a pending transfer.",
-        same_athlete: "You can't send a photo to yourself.",
-      },
-    },
-    tag: {
-      fieldLabel: "Tag a friend…",
-      placeholder: "Choose a friend",
-      button: "Tag",
-      menuLabel: "Tag…",
-      modalTitle: "Tag a friend",
-      closeLabel: "Close",
-      outcomes: {
-        not_owner: "You're no longer the owner of this photo.",
         already_tagged: "You already tagged that friend on this photo.",
-        same_athlete: "You can't tag yourself.",
+        same_athlete: "You can't share a photo with yourself.",
       },
     },
     pendingWith: (recipientName: string) => `Pending — ${recipientName}`,

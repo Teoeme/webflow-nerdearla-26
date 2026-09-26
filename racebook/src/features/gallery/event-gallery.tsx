@@ -7,10 +7,10 @@ import { listPendingTransfersFrom } from "@/db/transfers";
 import type { Athlete } from "@/db/types";
 import { getDictionary } from "@/i18n/dictionary";
 import { getCurrentAthlete } from "@/session/current-athlete";
-import { LightboxProvider, type LightboxPhoto } from "./lightbox";
-import { PhotoCard } from "./photo-card";
+import { GalleryGrid } from "./gallery-grid";
+import type { LightboxPhoto } from "./lightbox";
 import { pillsForOwnedPhoto } from "./photo-status";
-import { UploadForm } from "./upload-form";
+import type { ShareCandidate, ShareMessages } from "./share-panel";
 
 function toPendingRecipientByPhotoId(
   pendingTransfers: Awaited<ReturnType<typeof listPendingTransfersFrom>>,
@@ -35,6 +35,26 @@ function toTagsByPhotoId(tags: PhotoTagWithName[]): Map<string, PhotoTagWithName
   return tagsByPhotoId;
 }
 
+type ShareDictionary = Awaited<ReturnType<typeof getDictionary>>["gallery"]["eventGallery"]["share"];
+
+// The Share panel is a client component: `sendButton`/`tagButton` in the dictionary are
+// functions of an athlete's name, and a function can't cross that boundary as a prop.
+// Every candidate's two labels are resolved to plain strings here, once, instead of
+// passing the functions down.
+function toShareCandidates(candidates: Athlete[], share: ShareDictionary): ShareCandidate[] {
+  return candidates.map((athlete) => ({
+    id: athlete.id,
+    name: athlete.name,
+    sendLabel: share.sendButton(athlete.name),
+    tagLabel: share.tagButton(athlete.name),
+  }));
+}
+
+function toShareMessages(share: ShareDictionary): ShareMessages {
+  const { action, modalTitle, closeLabel, modeSend, modeTag, choosePrompt, pendingPill, addedPill, outcomes } = share;
+  return { action, modalTitle, closeLabel, modeSend, modeTag, choosePrompt, pendingPill, addedPill, outcomes };
+}
+
 export async function EventGallery({ eventId }: { eventId: string }): Promise<JSX.Element> {
   const [currentAthlete, dictionary] = await Promise.all([getCurrentAthlete(), getDictionary()]);
   const messages = dictionary.gallery.eventGallery;
@@ -52,6 +72,8 @@ export async function EventGallery({ eventId }: { eventId: string }): Promise<JS
   const pendingRecipientByPhotoId = toPendingRecipientByPhotoId(pendingTransfers, athleteById);
   const tagsByPhotoId = toTagsByPhotoId(openTags);
   const displayEventName = event?.name ?? eventId;
+  const shareCandidates = toShareCandidates(transferCandidates, messages.share);
+  const shareMessages = toShareMessages(messages.share);
 
   const lightboxPhotos: LightboxPhoto[] = photos.map((photo) => {
     const isOwnPhoto = photo.taggedByName === null;
@@ -67,10 +89,10 @@ export async function EventGallery({ eventId }: { eventId: string }): Promise<JS
       ownerActions: isOwnPhoto
         ? {
             eventId,
-            candidates: transferCandidates,
-            showTransferForm: pendingRecipient === undefined,
-            transferMessages: messages.transfer,
-            tagMessages: messages.tag,
+            candidates: shareCandidates,
+            pendingTransferRecipientId: pendingRecipient?.id ?? null,
+            tagStatusByAthleteId: Object.fromEntries(tags.map((tag) => [tag.athleteId, tag.status])),
+            messages: shareMessages,
           }
         : null,
     };
@@ -79,18 +101,13 @@ export async function EventGallery({ eventId }: { eventId: string }): Promise<JS
   return (
     <section className="flex flex-col gap-4">
       <h2 className="text-heading text-xl">{messages.heading}</h2>
-      {photos.length === 0 ? (
-        <p className="text-text-muted">{messages.emptyState}</p>
-      ) : (
-        <LightboxProvider photos={lightboxPhotos} labels={messages.lightbox}>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {lightboxPhotos.map((photo) => (
-              <PhotoCard key={photo.id} photo={photo} actionsLabel={messages.actionsLabel} />
-            ))}
-          </div>
-        </LightboxProvider>
-      )}
-      <UploadForm eventId={eventId} messages={messages.upload} />
+      {photos.length === 0 ? <p className="text-text-muted">{messages.emptyState}</p> : null}
+      <GalleryGrid
+        eventId={eventId}
+        photos={lightboxPhotos}
+        lightboxLabels={messages.lightbox}
+        uploadMessages={messages.upload}
+      />
     </section>
   );
 }

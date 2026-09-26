@@ -1,46 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, type MenuItem } from "@/components/ui/menu";
 import { StatusPill } from "@/components/ui/status-pill";
-import { TagModal, TransferModal } from "./action-forms";
+import { SharePanel } from "./share-panel";
 import { PhotoThumbnailButton, type LightboxPhoto } from "./lightbox";
 
-// The overlay (pills + menu) shows at reduced opacity by default and full opacity on
-// hover or keyboard focus, on pointer-fine (mouse) viewports; smaller/touch viewports
-// keep it visible so there is no hover-only affordance to miss.
+// The overlay (pills + Share button) shows at reduced opacity by default and full
+// opacity on hover or keyboard focus, on pointer-fine (mouse) viewports; smaller/touch
+// viewports keep it visible so there is no hover-only affordance to miss.
 const overlayVisibilityClassName =
   "opacity-60 transition-opacity duration-150 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100";
 
 // One grid tile in the event gallery. Reuses the same per-photo view model the
 // lightbox renders (`LightboxPhoto`) so the tile and the lightbox footer never
-// disagree on pills, tagged-by label or which owner actions are available; only
-// plain data and pre-resolved strings cross into this client component.
-export function PhotoCard({ photo, actionsLabel }: { photo: LightboxPhoto; actionsLabel: string }) {
-  const [isTransferOpen, setTransferOpen] = useState(false);
-  const [transferInstance, setTransferInstance] = useState(0);
-  const [isTagOpen, setTagOpen] = useState(false);
-  const [tagInstance, setTagInstance] = useState(0);
+// disagree on pills, tagged-by label or the sharing state; only plain data and
+// pre-resolved strings cross into this client component.
+export function PhotoCard({ photo }: { photo: LightboxPhoto }) {
+  const [isShareOpen, setShareOpen] = useState(false);
+  const [shareInstance, setShareInstance] = useState(0);
 
   const ownerActions = photo.ownerActions;
-  const canTransfer = ownerActions !== null && ownerActions.showTransferForm;
 
-  function openTransfer(): void {
-    setTransferInstance((instance) => instance + 1);
-    setTransferOpen(true);
+  function openShare(): void {
+    setShareInstance((instance) => instance + 1);
+    setShareOpen(true);
   }
-
-  function openTag(): void {
-    setTagInstance((instance) => instance + 1);
-    setTagOpen(true);
-  }
-
-  const menuItems: MenuItem[] = ownerActions
-    ? [
-        ...(canTransfer ? [{ label: ownerActions.transferMessages.menuLabel, onSelect: openTransfer }] : []),
-        { label: ownerActions.tagMessages.menuLabel, onSelect: openTag },
-      ]
-    : [];
 
   return (
     <figure className="panel group relative aspect-square overflow-hidden">
@@ -58,44 +42,27 @@ export function PhotoCard({ photo, actionsLabel }: { photo: LightboxPhoto; actio
         </div>
       </div>
 
-      {menuItems.length > 0 ? (
+      {ownerActions ? (
         <div className={`absolute top-1 right-1 z-10 ${overlayVisibilityClassName}`}>
-          <Menu
-            align="end"
-            trigger={
-              <button
-                type="button"
-                aria-label={actionsLabel}
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-sm border border-line bg-background/70 text-text hover:opacity-80 active:opacity-70"
-              >
-                ⋯
-              </button>
-            }
-            items={menuItems}
-          />
+          <button
+            type="button"
+            onClick={openShare}
+            className="flex h-7 items-center gap-1 rounded-sm border border-line bg-background/70 px-2 text-label text-text hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            {ownerActions.messages.action}
+          </button>
         </div>
       ) : null}
 
-      {ownerActions && canTransfer ? (
-        <TransferModal
-          key={transferInstance}
-          open={isTransferOpen}
-          onOpenChange={setTransferOpen}
-          photoId={photo.id}
-          eventId={ownerActions.eventId}
-          candidates={ownerActions.candidates}
-          messages={ownerActions.transferMessages}
-        />
-      ) : null}
       {ownerActions ? (
-        <TagModal
-          key={tagInstance}
-          open={isTagOpen}
-          onOpenChange={setTagOpen}
+        <SharePanel
+          key={shareInstance}
+          open={isShareOpen}
+          onOpenChange={setShareOpen}
           photoId={photo.id}
-          eventId={ownerActions.eventId}
-          candidates={ownerActions.candidates}
-          messages={ownerActions.tagMessages}
+          photoSrc={photo.src}
+          photoAlt={photo.alt}
+          share={ownerActions}
         />
       ) : null}
     </figure>
