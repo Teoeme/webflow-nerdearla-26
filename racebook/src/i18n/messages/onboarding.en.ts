@@ -30,6 +30,17 @@ export const onboardingEn = {
     fieldDistance: "Distance",
     fieldPlace: "Place",
   },
+  tour: {
+    title: "Try it in two minutes",
+    steps: [
+      "Use \"View as\" in the sidebar to act as Lucía, Tomás or Sofía (demo accounts, no login).",
+      "As Lucía, open a race, add photos, and use Share on a photo to send it to Tomás or tag Sofía.",
+      "Switch to Tomás and open the Inbox: accept the photo into one of his races or a new one.",
+      "Open a race, choose \"Log my result\" and \"Fill from a screenshot\" to let the AI read your watch summary.",
+    ],
+    samplesIntro: "No screenshot at hand? Download a sample:",
+    sampleLabel: "Sample",
+  },
 };
 
 export type OnboardingMessages = typeof onboardingEn;

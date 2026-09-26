@@ -32,4 +32,15 @@ export const onboardingEs: OnboardingMessages = {
     fieldDistance: "Distancia",
     fieldPlace: "Puesto",
   },
+  tour: {
+    title: "Probalo en dos minutos",
+    steps: [
+      "Usá \"Ver como\" en la barra lateral para actuar como Lucía, Tomás o Sofía (cuentas de demo, sin login).",
+      "Como Lucía, abrí una carrera, sumá fotos y usá Compartir en una foto para mandársela a Tomás o etiquetar a Sofía.",
+      "Cambiá a Tomás y abrí la Bandeja: aceptá la foto en una de sus carreras o en una nueva.",
+      "Abrí una carrera, elegí \"Cargá tu resultado\" y \"Completá desde una captura\" para que la IA lea el resumen de tu reloj.",
+    ],
+    samplesIntro: "¿No tenés una captura a mano? Descargá una de ejemplo:",
+    sampleLabel: "Ejemplo",
+  },
 };
