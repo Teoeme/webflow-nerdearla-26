@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="glowEdgeH" x1="100%" y1="0%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#3D7BFF" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#3D7BFF" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="glowEdgeV" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#3D7BFF" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#3D7BFF" stop-opacity="0" />
+    </linearGradient>
+    <radialGradient id="glowHaze" cx="100%" cy="100%" r="85%">
+      <stop offset="0%" stop-color="#3D7BFF" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#3D7BFF" stop-opacity="0" />
+    </radialGradient>
+    <clipPath id="iconClip">
+      <rect x="0" y="0" width="32" height="32" rx="4" />
+    </clipPath>
+  </defs>
+
+  <rect x="0" y="0" width="32" height="32" rx="4" fill="#0B0C0E" />
+
+  <!-- signature neon corner light, fading from the bottom-right corner -->
+  <g clip-path="url(#iconClip)">
+    <rect x="0" y="0" width="32" height="32" fill="url(#glowHaze)" />
+    <rect x="17.6" y="30.6" width="14.4" height="1.4" fill="url(#glowEdgeH)" />
+    <rect x="30.6" y="17.6" width="1.4" height="14.4" fill="url(#glowEdgeV)" />
+  </g>
+
+  <!-- hand-drawn "R" monogram: a flat geometric path (stem + bowl + leg, one
+       counter cut with fill-rule evenodd), sheared to read as the wordmark's
+       forward italic slant. Not a font reference. -->
+  <g transform="translate(16,16) scale(0.275) skewX(-12) translate(-32,-40)" fill="#3D7BFF">
+    <path
+      d="M0,0 L64,0 L64,42 L48,42 L64,80 L46,80 L30,42 L18,42 L18,80 L0,80 Z M30,9 L52,9 L52,30 L30,30 Z"
+      fill-rule="evenodd"
+    />
+  </g>
+</svg>
